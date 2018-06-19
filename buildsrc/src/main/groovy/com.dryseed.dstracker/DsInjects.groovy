@@ -6,7 +6,7 @@ import javassist.CtMethod
 import org.gradle.api.Project
 
 public class DsInjects {
-//初始化类池
+    //初始化类池
     private final static ClassPool pool = ClassPool.getDefault();
 
     public static void inject(String path, Project project) {
@@ -20,30 +20,31 @@ public class DsInjects {
         File dir = new File(path);
         if (dir.isDirectory()) {
             //遍历文件夹
-            dir.eachFileRecurse { File file ->
-                String filePath = file.absolutePath
-                println("filePath = " + filePath)
-                if (file.getName().equals("MainActivity.class")) {
+            dir.eachFileRecurse {
+                File file ->
+                    String filePath = file.absolutePath
+                    println("filePath = " + filePath)
+                    if (file.getName().equals("MainActivity.class")) {
 
-                    //获取MainActivity.class
-                    CtClass ctClass = pool.getCtClass("com.dryseed.dstracker.MainActivity");
-                    println("ctClass = " + ctClass)
-                    //解冻
-                    if (ctClass.isFrozen())
-                        ctClass.defrost()
+                        //获取MainActivity.class
+                        CtClass ctClass = pool.getCtClass("com.dryseed.dstracker.MainActivity");
+                        println("ctClass = " + ctClass)
+                        //解冻
+                        if (ctClass.isFrozen())
+                            ctClass.defrost()
 
-                    //获取到OnCreate方法
-                    CtMethod ctMethod = ctClass.getDeclaredMethod("onCreate")
+                        //获取到OnCreate方法
+                        CtMethod ctMethod = ctClass.getDeclaredMethod("onCreate")
 
-                    println("方法名 = " + ctMethod)
+                        println("方法名 = " + ctMethod)
 
-                    String insetBeforeStr = """ android.widget.Toast.makeText(this,"我是被插入的Toast代码~!!",android.widget.Toast.LENGTH_SHORT).show();
+                        String insetBeforeStr = """ android.widget.Toast.makeText(this,"我是被插入的Toast代码~!!",android.widget.Toast.LENGTH_SHORT).show();
                                                 """
-                    //在方法开头插入代码
-                    ctMethod.insertBefore(insetBeforeStr);
-                    ctClass.writeFile(path)
-                    ctClass.detach()//释放
-                }
+                        //在方法开头插入代码
+                        ctMethod.insertBefore(insetBeforeStr);
+                        ctClass.writeFile(path)
+                        ctClass.detach()//释放
+                    }
             }
         }
 
