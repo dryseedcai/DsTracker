@@ -8,7 +8,7 @@ import com.dryseed.dstracker.annotations.TimeCost;
 public class MainActivity extends AppCompatActivity {
 
     @Override
-    @TimeCost
+    @TimeCost(name="DDDSSS")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);

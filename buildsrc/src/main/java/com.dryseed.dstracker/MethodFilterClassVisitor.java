@@ -4,6 +4,7 @@ import com.dryseed.dstracker.annotations.TimeCost;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -36,6 +37,13 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         System.out.println(String.format("visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
                 version, access, name, signature, superName, interfaces));
         // version : 51 | access : 33 | name : com/dryseed/dstracker/MainActivity | signature : null | superName : android/support/v7/app/AppCompatActivity | interfaces : [Ljava.lang.String;@a2c22c0
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+        System.out.println(String.format("MethodFilterClassVisitor.visitAnnotation -> desc : %s | visible : %s", desc, visible));
+        //return super.visitAnnotation(desc, visible);
+        return new AnnotationMethodsScanner();
     }
 
     /**
@@ -151,42 +159,14 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             }
 
             @Override
-            public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String desc, boolean visible) {
-                return super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, desc, visible);
-            }
-
-            @Override
             public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                System.out.println(String.format("visitAnnotation -> desc : %s | visible : %s", desc, visible));
+                // visitAnnotation -> desc : Lcom/dryseed/dstracker/annotations/TimeCost; | visible : false
+                System.out.println(String.format("MethodVisitor.visitAnnotation -> desc : %s | visible : %s", desc, visible));
                 if (Type.getDescriptor(TimeCost.class).equals(desc)) {
                     inject = true;
                 }
-                return super.visitAnnotation(desc, visible);
-            }
-
-            @Override
-            public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-                System.out.println("visitParameterAnnotation");
-                return super.visitParameterAnnotation(parameter, desc, visible);
-            }
-
-            @Override
-            public AnnotationVisitor visitAnnotationDefault() {
-                System.out.println("visitAnnotationDefault");
-                return super.visitAnnotationDefault();
-            }
-
-            @Override
-            public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                System.out.println("visitTypeAnnotation");
-                return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
-            }
-
-            @Override
-            public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                System.out.println(String.format("visitInsnAnnotation -> typeRef : %d | typePath : %s | desc : %s | visible : %s",
-                        typeRef, typePath, desc, visible));
-                return super.visitInsnAnnotation(typeRef, typePath, desc, visible);
+                //return super.visitAnnotation(desc, visible);
+                return new AnnotationMethodsArrayValueScanner();
             }
 
             public void print(String msg) {
@@ -197,7 +177,8 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             }
         };
         return methodVisitor;
-        //return super.visitMethod(i, s, s1, s2, strings);
+        //return new MethodAnnotationScanner();
+
 
         /*
             eg :
@@ -210,4 +191,57 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 }
          */
     }
+
+    static class AnnotationMethodsArrayValueScanner extends AnnotationVisitor{
+        AnnotationMethodsArrayValueScanner(){ super(Opcodes.ASM5); }
+
+        @Override
+        public void visit(String name, Object value){
+            System.out.println("Ar.visit: value="+value);
+            super.visit(name, value);
+        }
+    }
+
+    static class AnnotationMethodsScanner extends AnnotationVisitor{
+
+        AnnotationMethodsScanner(){ super(Opcodes.ASM5); }
+
+        @Override
+        public void visitEnum(String name, String desc, String value){
+            System.out.println("A.visitEnum: name="+name+" desc="+desc+" value="+value);
+            super.visitEnum(name, desc, value);
+        }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String name, String desc){
+            System.out.println("A.visitAnnotation: name="+name+" desc="+desc);
+            return super.visitAnnotation(name, desc);
+        }
+
+        @Override
+        public AnnotationVisitor visitArray(String name){
+            return new AnnotationMethodsArrayValueScanner();
+        }
+    }
+
+    static class FieldAnnotationScanner extends FieldVisitor {
+        FieldAnnotationScanner(){ super(Opcodes.ASM5); }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible){
+            System.out.println("F.visitAnnotation: desc="+desc);
+            return new AnnotationScanner.AnnotationMethodsScanner();
+        }
+    }
+
+    /*static class MethodAnnotationScanner extends MethodVisitor{
+        MethodAnnotationScanner(){ super(Opcodes.ASM5); }
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String desc, boolean visible){
+            System.out.println("M.visitAnnotation: desc="+desc);
+            //return super.visitAnnotation(desc, visible);
+            return new AnnotationMethodsArrayValueScanner();
+        }
+    }*/
 }

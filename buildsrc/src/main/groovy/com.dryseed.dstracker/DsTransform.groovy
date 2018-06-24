@@ -128,6 +128,7 @@ class DsTransform extends Transform {
                                     def className = name.split(".class")[0]
                                     ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter)
                                     classReader.accept(cv, EXPAND_FRAMES)
+                                    //classReader.accept(new AnnotationScanner(Opcodes.ASM5),EXPAND_FRAMES)
                                     byte[] code = classWriter.toByteArray()
                                     FileOutputStream fos = new FileOutputStream(
                                             file.parentFile.absolutePath + File.separator + name)
