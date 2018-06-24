@@ -33,3 +33,8 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// 等价于 gradle.ext.dryseed = "dryseedcai"
+ext{
+    dryseed = "dryseedcai"
+}

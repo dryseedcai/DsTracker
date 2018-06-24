@@ -30,3 +30,30 @@ dependencies {
 
     compile project(':dstrackerimp')
 }
+
+// 278405780 gradle全局只有一个，值是固定的
+println "In DryseedDemo, gradle id is : " + gradle.hashCode()
+// C:\Users\User\.gradle\wrapper\dists\gradle-3.3-all\55gk2rcmfc6p2dg9u9ohc3hw9\gradle-3.3 ： 在哪个目录存储的gradle可执行程序
+println "Home Dir : " + gradle.gradleHomeDir
+// C:\Users\User\.gradle ： gradle自己设置的目录，里边存储了一些配置文件，以及编译过程中的缓存文件，生成的类文件，编译中依赖的插件等等。
+println "User Home Dir : " + gradle.gradleUserHomeDir
+// null
+println "Parent : " + gradle.parent
+// [:app:assembleDebug, :buildsrc:assemble]
+println "StartParameter.taskNames ：" + gradle.startParameter.taskNames
+// root project 'DsTracker'
+println "RootProject : " + gradle.rootProject
+// ext property configured at Project/build.gradle
+println "ext.dryseed : " + project.dryseed
+// project.tasks
+print "tasks name : "
+project.tasks.each {
+    print it.name + " "
+}
+println()
+//
+println "android.bootClasspath.get(0).absolutePath : " + android.bootClasspath.get(0).absolutePath
+
+task dsTask{
+    println "============ dsTask start ============"
+}

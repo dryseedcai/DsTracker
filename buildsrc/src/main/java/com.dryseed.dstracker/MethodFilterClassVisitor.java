@@ -2,10 +2,13 @@ package com.dryseed.dstracker;
 
 import com.dryseed.dstracker.annotations.TimeCost;
 
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 public class MethodFilterClassVisitor extends ClassVisitor {
@@ -58,14 +61,6 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
             boolean inject = false;
 
-            private boolean isInject() {
-               /* if(name.equals("setStartTime") || name.equals("setEndTime") || name.equals("getCostTime")){
-                   return false;
-                }
-                return true;*/
-                return inject;
-            }
-
             @Override
             public void visitCode() {
                 super.visitCode();
@@ -73,23 +68,13 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             }
 
             @Override
-            public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                if (Type.getDescriptor(TimeCost.class).equals(desc)) {
-                    inject = true;
-                }
-                return super.visitAnnotation(desc, visible);
-            }
-
-            @Override
             public void visitFieldInsn(int opcode, String owner, String name, String desc) {
                 super.visitFieldInsn(opcode, owner, name, desc);
             }
 
-            public void print(String msg) {
-                mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-                mv.visitLdcInsn(msg);
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-                        "(Ljava/lang/String;)V", false);
+            @Override
+            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+                super.visitMethodInsn(opcode, owner, name, desc, itf);
             }
 
             @Override
@@ -134,6 +119,14 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 }
             }
 
+            private boolean isInject() {
+               /* if(name.equals("setStartTime") || name.equals("setEndTime") || name.equals("getCostTime")){
+                   return false;
+                }
+                return true;*/
+                return inject;
+            }
+
             @Override
             protected void onMethodExit(int i) {
                 //super.onMethodExit(i);
@@ -155,6 +148,52 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                     //mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
                     //      "(Ljava/lang/String;)V", false);
                 }
+            }
+
+            @Override
+            public AnnotationVisitor visitLocalVariableAnnotation(int typeRef, TypePath typePath, Label[] start, Label[] end, int[] index, String desc, boolean visible) {
+                return super.visitLocalVariableAnnotation(typeRef, typePath, start, end, index, desc, visible);
+            }
+
+            @Override
+            public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                System.out.println(String.format("visitAnnotation -> desc : %s | visible : %s", desc, visible));
+                if (Type.getDescriptor(TimeCost.class).equals(desc)) {
+                    inject = true;
+                }
+                return super.visitAnnotation(desc, visible);
+            }
+
+            @Override
+            public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
+                System.out.println("visitParameterAnnotation");
+                return super.visitParameterAnnotation(parameter, desc, visible);
+            }
+
+            @Override
+            public AnnotationVisitor visitAnnotationDefault() {
+                System.out.println("visitAnnotationDefault");
+                return super.visitAnnotationDefault();
+            }
+
+            @Override
+            public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+                System.out.println("visitTypeAnnotation");
+                return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+            }
+
+            @Override
+            public AnnotationVisitor visitInsnAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+                System.out.println(String.format("visitInsnAnnotation -> typeRef : %d | typePath : %s | desc : %s | visible : %s",
+                        typeRef, typePath, desc, visible));
+                return super.visitInsnAnnotation(typeRef, typePath, desc, visible);
+            }
+
+            public void print(String msg) {
+                mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+                mv.visitLdcInsn(msg);
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
+                        "(Ljava/lang/String;)V", false);
             }
         };
         return methodVisitor;
