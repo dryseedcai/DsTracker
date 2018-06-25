@@ -31,6 +31,11 @@ dependencies {
     compile project(':dstrackerimp')
 }
 
+dsTrackerConfig {
+    isDebug = true
+    watchTaskTimeCost = true
+}
+
 // 278405780 gradle全局只有一个，值是固定的
 println "In DryseedDemo, gradle id is : " + gradle.hashCode()
 // C:\Users\User\.gradle\wrapper\dists\gradle-3.3-all\55gk2rcmfc6p2dg9u9ohc3hw9\gradle-3.3 ： 在哪个目录存储的gradle可执行程序

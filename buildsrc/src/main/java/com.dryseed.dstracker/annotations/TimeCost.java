@@ -5,5 +5,5 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 public @interface TimeCost {
-    String name() default "DSSSS";
+    String name();
 }

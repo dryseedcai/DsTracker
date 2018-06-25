@@ -1,6 +1,7 @@
 package com.dryseed.dstracker;
 
 import com.dryseed.dstracker.annotations.TimeCost;
+import com.dryseed.dstracker.utils.Log;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -12,8 +13,25 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 
+import java.lang.annotation.Annotation;
+
+/**
+ * @User caiminming
+ * <p>
+ * 调用顺序：
+ * ====> DsTracker : MethodFilterClassVisitor.visit -> version : 51 | access : 33 | name : com/dryseed/dstracker/MainActivity | signature : null | superName : android/support/v7/app/AppCompatActivity | interfaces : [Ljava.lang.String;@2017ce9f
+ * ====> DsTracker : MethodFilterClassVisitor.visitMethod -> access : 1 | name : <init> | desc : ()V | signature : null | exceptions : null
+ * ====> DsTracker : AdviceAdapter onMethodEnter
+ * ====> DsTracker : AdviceAdapter onMethodExit
+ * ====> DsTracker : MethodFilterClassVisitor.visitMethod -> access : 4 | name : onCreate | desc : (Landroid/os/Bundle;)V | signature : null | exceptions : null
+ * ====> DsTracker : AdviceAdapter.visitAnnotation -> desc : Lcom/dryseed/dstracker/annotations/TimeCost; | visible : false
+ * ====> DsTracker : AnnotationMethodsArrayValueScanner.visit: value=DDDSSS
+ * ====> DsTracker : AdviceAdapter onMethodEnter
+ * ====> DsTracker : AdviceAdapter onMethodExit
+ */
 public class MethodFilterClassVisitor extends ClassVisitor {
     private String className;
+    private String mAnnotationValue;
 
     public MethodFilterClassVisitor(String className, ClassVisitor cv) {
         super(Opcodes.ASM5, cv);
@@ -34,16 +52,15 @@ public class MethodFilterClassVisitor extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
-        System.out.println(String.format("visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
+        Log.info(String.format("MethodFilterClassVisitor.visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
                 version, access, name, signature, superName, interfaces));
         // version : 51 | access : 33 | name : com/dryseed/dstracker/MainActivity | signature : null | superName : android/support/v7/app/AppCompatActivity | interfaces : [Ljava.lang.String;@a2c22c0
     }
 
     @Override
     public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-        System.out.println(String.format("MethodFilterClassVisitor.visitAnnotation -> desc : %s | visible : %s", desc, visible));
-        //return super.visitAnnotation(desc, visible);
-        return new AnnotationMethodsScanner();
+        Log.info(String.format("MethodFilterClassVisitor.visitAnnotation -> desc : %s | visible : %s", desc, visible));
+        return super.visitAnnotation(desc, visible);
     }
 
     /**
@@ -59,7 +76,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
      */
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        System.out.println(String.format("visitMethod -> access : %d | name : %s | desc : %s | signature : %s | exceptions : %s",
+        Log.info(String.format("MethodFilterClassVisitor.visitMethod -> access : %d | name : %s | desc : %s | signature : %s | exceptions : %s",
                 access, name, desc, signature, exceptions));
         //visitMethod -> access : 1 | name : <init> | desc : ()V | signature : null | exceptions : null
         //visitMethod -> access : 4 | name : onCreate | desc : (Landroid/os/Bundle;)V | signature : null | exceptions : null
@@ -87,43 +104,13 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodEnter() {
-                //super.onMethodEnter();
-                //统计public static类方法
-               /* if(access==Opcodes.ACC_STATIC+Opcodes.ACC_PUBLIC
-                        && !name.equals("countStaticClass")
-                        && !name.equals("isOk")
-                        && !className.equals("com/meiyou/meetyoucost/CostLog")){
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("Usopp MeetyouCost Statics :").append(className).append(":").append(name);
-                    //String log = className+":contains public static method:"+name+":"+desc;
-                    //TestController:contains public static method:getInstance:()Lcom/meiyou/meetyoucostdemo/TestController;
-                    mv.visitLdcInsn(className);
-                    mv.visitLdcInsn(name);
-                    String log = sb.toString();
-                    mv.visitLdcInsn(log);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/meiyou/meetyoucost/CostLog", "countStaticClass",
-                            "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
-                    // mw.visitInsn(RETURN);
-                    // 这段代码使用最多一个栈元素和一个本地变量
-                    //mw.visitMaxs(1, 1);
-                }*/
+                Log.info("AdviceAdapter onMethodEnter");
                 //统计方法耗时
                 if (isInject()) {
-                    if (name.equals("isOk")) {
-                       /* mv.visitMethodInsn(INVOKESTATIC, "com/meiyou/meetyoucost/CostLog", "isOk",
-                                "()Z", false);
-                        Type type = Type.getReturnType(desc);
-                        ResultTypeUtil.returnResult(mv,type);*/
-                        //理解这篇文章
-                        //https://www.cnblogs.com/coding-way/p/6600647.html
-                        mv.visitLdcInsn(false);
-                        mv.visitInsn(IRETURN);
-                    } else {
-                        mv.visitLdcInsn(className + ":" + name + desc);
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "nanoTime", "()J", false);
-                        mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/dstracker/TimeCostLog", "setStartTime",
-                                "(Ljava/lang/String;J)V", false);
-                    }
+                    mv.visitLdcInsn(className + ":" + name + desc);
+                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "nanoTime", "()J", false);
+                    mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/dstracker/TimeCostLog", "setStartTime",
+                            "(Ljava/lang/String;J)V", false);
                 }
             }
 
@@ -137,6 +124,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodExit(int i) {
+                Log.info("AdviceAdapter onMethodExit");
                 //super.onMethodExit(i);
                 if (isInject()) {
                     mv.visitLdcInsn(className + ":" + name + desc);
@@ -161,7 +149,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             @Override
             public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
                 // visitAnnotation -> desc : Lcom/dryseed/dstracker/annotations/TimeCost; | visible : false
-                System.out.println(String.format("MethodVisitor.visitAnnotation -> desc : %s | visible : %s", desc, visible));
+                Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
                 if (Type.getDescriptor(TimeCost.class).equals(desc)) {
                     inject = true;
                 }
@@ -192,56 +180,15 @@ public class MethodFilterClassVisitor extends ClassVisitor {
          */
     }
 
-    static class AnnotationMethodsArrayValueScanner extends AnnotationVisitor{
-        AnnotationMethodsArrayValueScanner(){ super(Opcodes.ASM5); }
+    static class AnnotationMethodsArrayValueScanner extends AnnotationVisitor {
+        AnnotationMethodsArrayValueScanner() {
+            super(Opcodes.ASM5);
+        }
 
         @Override
-        public void visit(String name, Object value){
-            System.out.println("Ar.visit: value="+value);
+        public void visit(String name, Object value) {
+            Log.info(String.format("AnnotationMethodsArrayValueScanner.visit: %s -> %s", name, value));
             super.visit(name, value);
         }
     }
-
-    static class AnnotationMethodsScanner extends AnnotationVisitor{
-
-        AnnotationMethodsScanner(){ super(Opcodes.ASM5); }
-
-        @Override
-        public void visitEnum(String name, String desc, String value){
-            System.out.println("A.visitEnum: name="+name+" desc="+desc+" value="+value);
-            super.visitEnum(name, desc, value);
-        }
-
-        @Override
-        public AnnotationVisitor visitAnnotation(String name, String desc){
-            System.out.println("A.visitAnnotation: name="+name+" desc="+desc);
-            return super.visitAnnotation(name, desc);
-        }
-
-        @Override
-        public AnnotationVisitor visitArray(String name){
-            return new AnnotationMethodsArrayValueScanner();
-        }
-    }
-
-    static class FieldAnnotationScanner extends FieldVisitor {
-        FieldAnnotationScanner(){ super(Opcodes.ASM5); }
-
-        @Override
-        public AnnotationVisitor visitAnnotation(String desc, boolean visible){
-            System.out.println("F.visitAnnotation: desc="+desc);
-            return new AnnotationScanner.AnnotationMethodsScanner();
-        }
-    }
-
-    /*static class MethodAnnotationScanner extends MethodVisitor{
-        MethodAnnotationScanner(){ super(Opcodes.ASM5); }
-
-        @Override
-        public AnnotationVisitor visitAnnotation(String desc, boolean visible){
-            System.out.println("M.visitAnnotation: desc="+desc);
-            //return super.visitAnnotation(desc, visible);
-            return new AnnotationMethodsArrayValueScanner();
-        }
-    }*/
 }
