@@ -5,5 +5,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 public @interface TimeCost {
-    String name();
+    String name() default "";
+
+    long milliTime();
 }

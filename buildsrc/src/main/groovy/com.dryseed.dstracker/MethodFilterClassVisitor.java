@@ -5,15 +5,17 @@ import com.dryseed.dstracker.utils.Log;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.TypePath;
 import org.objectweb.asm.commons.AdviceAdapter;
 
-import java.lang.annotation.Annotation;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.LLOAD;
+
 
 /**
  * @User caiminming
@@ -32,6 +34,7 @@ import java.lang.annotation.Annotation;
 public class MethodFilterClassVisitor extends ClassVisitor {
     private String className;
     private String mAnnotationValue;
+    private ConcurrentHashMap mAnnotationHashMap = new ConcurrentHashMap();
 
     public MethodFilterClassVisitor(String className, ClassVisitor cv) {
         super(Opcodes.ASM5, cv);
@@ -54,7 +57,6 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
         Log.info(String.format("MethodFilterClassVisitor.visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
                 version, access, name, signature, superName, interfaces));
-        // version : 51 | access : 33 | name : com/dryseed/dstracker/MainActivity | signature : null | superName : android/support/v7/app/AppCompatActivity | interfaces : [Ljava.lang.String;@a2c22c0
     }
 
     @Override
@@ -78,13 +80,10 @@ public class MethodFilterClassVisitor extends ClassVisitor {
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         Log.info(String.format("MethodFilterClassVisitor.visitMethod -> access : %d | name : %s | desc : %s | signature : %s | exceptions : %s",
                 access, name, desc, signature, exceptions));
-        //visitMethod -> access : 1 | name : <init> | desc : ()V | signature : null | exceptions : null
-        //visitMethod -> access : 4 | name : onCreate | desc : (Landroid/os/Bundle;)V | signature : null | exceptions : null
-
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions);
         methodVisitor = new AdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc) {
 
-            boolean inject = false;
+            boolean isInject = false;
 
             @Override
             public void visitCode() {
@@ -106,81 +105,117 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             protected void onMethodEnter() {
                 Log.info("AdviceAdapter onMethodEnter");
                 //统计方法耗时
-                if (isInject()) {
-                    mv.visitLdcInsn(className + ":" + name + desc);
-                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "nanoTime", "()J", false);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/dstracker/TimeCostLog", "setStartTime",
-                            "(Ljava/lang/String;J)V", false);
+                if (isInject && mAnnotationHashMap != null) {
+                    String key = className + ":" + name + desc;
+                    if (mAnnotationHashMap.isEmpty()) {
+                        generateStartCodeWithNoParam(mv, key);
+                    } else if (mAnnotationHashMap.containsKey("milliTime")) {
+                        generateStartCodeWithExceededTimeParam(mv, key, (long) mAnnotationHashMap.get("milliTime"));
+                    } else {
+                        generateStartCodeWithNoParam(mv, key);
+                    }
                 }
-            }
-
-            private boolean isInject() {
-               /* if(name.equals("setStartTime") || name.equals("setEndTime") || name.equals("getCostTime")){
-                   return false;
-                }
-                return true;*/
-                return inject;
+                mAnnotationHashMap.clear();
             }
 
             @Override
             protected void onMethodExit(int i) {
                 Log.info("AdviceAdapter onMethodExit");
-                //super.onMethodExit(i);
-                if (isInject()) {
-                    mv.visitLdcInsn(className + ":" + name + desc);
-                    mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "nanoTime", "()J", false);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/dstracker/TimeCostLog", "setEndTime",
-                            "(Ljava/lang/String;J)V", false);
-
-                    /*mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-                    mv.visitLdcInsn(className+":"+name+desc);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/meiyou/meetyoucost/CostLog", "getCostTime",
-                            "(Ljava/lang/String;)Ljava/lang/String;", false);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-                            "(Ljava/lang/String;)V", false);*/
-
-                    //mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-                    //mv.visitLdcInsn("========end=========");
-                    //mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-                    //      "(Ljava/lang/String;)V", false);
+                if (isInject) {
+                    generateEndCodeWithNoParam(mv, className + ":" + name + desc);
+                    isInject = false;
                 }
             }
 
             @Override
             public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                // visitAnnotation -> desc : Lcom/dryseed/dstracker/annotations/TimeCost; | visible : false
                 Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
                 if (Type.getDescriptor(TimeCost.class).equals(desc)) {
-                    inject = true;
+                    isInject = true;
                 }
-                //return super.visitAnnotation(desc, visible);
                 return new AnnotationMethodsArrayValueScanner();
-            }
-
-            public void print(String msg) {
-                mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
-                mv.visitLdcInsn(msg);
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println",
-                        "(Ljava/lang/String;)V", false);
             }
         };
         return methodVisitor;
-        //return new MethodAnnotationScanner();
-
-
-        /*
-            eg :
-                @TimeCost
-                protected void onCreate(Bundle savedInstanceState) {
-                    TimeCostLog.setStartTime("MainActivity:onCreate(Landroid/os/Bundle;)V", System.nanoTime());
-                    super.onCreate(savedInstanceState);
-                    this.setContentView(2130968603);
-                    TimeCostLog.setEndTime("MainActivity:onCreate(Landroid/os/Bundle;)V", System.nanoTime());
-                }
-         */
     }
 
-    static class AnnotationMethodsArrayValueScanner extends AnnotationVisitor {
+    private void generateEndCodeWithNoParam(MethodVisitor mv, String name) {
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "get",
+                "()Lcom/dryseed/dstracker/TimeCostCanary;",
+                false
+        );
+        mv.visitLdcInsn(name);
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "java/lang/System",
+                "currentTimeMillis",
+                "()J",
+                false
+        );
+        mv.visitMethodInsn(
+                INVOKEVIRTUAL,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "setEndTime",
+                "(Ljava/lang/String;J)V",
+                false
+        );
+    }
+
+    private void generateStartCodeWithNoParam(MethodVisitor mv, String name) {
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "get",
+                "()Lcom/dryseed/dstracker/TimeCostCanary;",
+                false
+        );
+        mv.visitLdcInsn(name);
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "java/lang/System",
+                "currentTimeMillis",
+                "()J",
+                false
+        );
+        mv.visitMethodInsn(
+                INVOKEVIRTUAL,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "setStartTime",
+                "(Ljava/lang/String;J)V",
+                false
+        );
+    }
+
+    private void generateStartCodeWithExceededTimeParam(MethodVisitor mv, String name, long exceededTime) {
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "get",
+                "()Lcom/dryseed/dstracker/TimeCostCanary;",
+                false
+        );
+        mv.visitLdcInsn(name);
+        mv.visitMethodInsn(
+                INVOKESTATIC,
+                "java/lang/System",
+                "currentTimeMillis",
+                "()J",
+                false
+        );
+        mv.visitLdcInsn(new Long(exceededTime));
+        mv.visitMethodInsn(
+                INVOKEVIRTUAL,
+                "com/dryseed/dstracker/TimeCostCanary",
+                "setStartTime",
+                "(Ljava/lang/String;JJ)V",
+                false
+        );
+    }
+
+    class AnnotationMethodsArrayValueScanner extends AnnotationVisitor {
         AnnotationMethodsArrayValueScanner() {
             super(Opcodes.ASM5);
         }
@@ -188,6 +223,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         @Override
         public void visit(String name, Object value) {
             Log.info(String.format("AnnotationMethodsArrayValueScanner.visit: %s -> %s", name, value));
+            mAnnotationHashMap.put(name, value);
             super.visit(name, value);
         }
     }
