@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * @author caiminming
+ */
 public class TimeCostCore {
     public static final String TAG = "TimeCostCore";
 
@@ -79,18 +82,27 @@ public class TimeCostCore {
 
         Log.d(TAG, "handleCost " + timeCostInfo.toString());
 
-        long cost = timeCostInfo.getEndMilliTime() - timeCostInfo.getStartMilliTime();
+        if (timeCostInfo.isExceed()) {
+            Log.w(TAG, String.format(
+                    "%s has exceed time. TimeCost : %d | ExceededTime : %d",
+                    timeCostInfo.getName(),
+                    timeCostInfo.getTimeCost(),
+                    timeCostInfo.getExceedMilliTime())
+            );
 
-        if (cost > timeCostInfo.getExceedMilliTime()) {
-            Log.w(TAG, String.format("%s has exceed time. TimeCost : %d | ExceededTime : %d", timeCostInfo.getName(), cost, timeCostInfo.getExceedMilliTime()));
-        } else {
-            Log.d(TAG, String.format("%s has not exceed time. TimeCost : %d | ExceededTime : %d", timeCostInfo.getName(), cost, timeCostInfo.getExceedMilliTime()));
-        }
-
-        if (!mInterceptorChain.isEmpty()) {
-            for (TimeCostInterceptor interceptor : mInterceptorChain) {
-                interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
+            if (!mInterceptorChain.isEmpty()) {
+                for (TimeCostInterceptor interceptor : mInterceptorChain) {
+                    interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
+                }
             }
+
+        } else {
+            Log.d(TAG, String.format(
+                    "%s has not exceed time. TimeCost : %d | ExceededTime : %d",
+                    timeCostInfo.getName(),
+                    timeCostInfo.getTimeCost(),
+                    timeCostInfo.getExceedMilliTime())
+            );
         }
     }
 

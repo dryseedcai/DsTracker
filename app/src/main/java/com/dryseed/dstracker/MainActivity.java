@@ -11,15 +11,13 @@ import com.dryseed.dstracker.annotations.TimeCost;
 public class MainActivity extends AppCompatActivity {
 
     @Override
-    @TimeCost(name = "onCreateName")
+    @TimeCost(name = "onCreate")
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toast.makeText(this, "onCreate", Toast.LENGTH_SHORT).show();
-        Log.d("TimeCost", "onCreate");
     }
 
-    @TimeCost(name = "myMethodName", milliTime = 500l)
+    @TimeCost(name = "myMethod", milliTime = 500L)
     public void myMethod(View view) {
         Log.d("TimeCost", "myMethod");
         try {
@@ -29,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @TimeCost(name = "myMethod2")
     private void myMethod2() {
 
     }

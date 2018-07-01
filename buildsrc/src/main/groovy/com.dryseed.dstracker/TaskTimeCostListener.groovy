@@ -37,14 +37,11 @@ public class TaskTimeCostListener implements TaskExecutionListener, BuildListene
     void buildFinished(BuildResult buildResult) {
         println "Task build Finish,Total time:"
         for (time in times) {
+            if (time[0] < 1000) {
+                continue
+            }
             printf "%7sms  %s\n", time
         }
-        /*println "Task spend time:"
-        for (time in times) {
-            if (time[0] >= 50) {
-                printf "%7sms  %s\n", time
-            }
-        }*/
     }
 
     @Override

@@ -1,10 +1,24 @@
 package com.dryseed.dstracker;
 
+/**
+ * @author caiminming
+ */
 public class TimeCostInfo {
     private String name;
+    /**
+     * Start Time
+     */
     private long mStartMilliTime;
+    /**
+     * End Time
+     */
     private long mEndMilliTime;
-    private long exceedMilliTime = 0;
+    /**
+     * Exceed Time
+     */
+    private long mExceedMilliTime = 0;
+
+    private long mTimeCost;
 
     public TimeCostInfo(String name, long curMilliTime) {
         this.name = name;
@@ -14,7 +28,7 @@ public class TimeCostInfo {
     public TimeCostInfo(String name, long curMilliTime, long excceedMilliTime) {
         this.name = name;
         this.mStartMilliTime = curMilliTime;
-        this.exceedMilliTime = excceedMilliTime;
+        this.mExceedMilliTime = excceedMilliTime;
     }
 
     public String getName() {
@@ -47,14 +61,23 @@ public class TimeCostInfo {
 
     public void setEndMilliTime(long endMilliTime) {
         mEndMilliTime = endMilliTime;
+        mTimeCost = mEndMilliTime - mStartMilliTime;
     }
 
     public long getExceedMilliTime() {
-        return exceedMilliTime;
+        return mExceedMilliTime;
     }
 
     public void setExceedMilliTime(long exceedMilliTime) {
-        this.exceedMilliTime = exceedMilliTime;
+        this.mExceedMilliTime = exceedMilliTime;
+    }
+
+    public long getTimeCost() {
+        return mTimeCost;
+    }
+
+    public void setTimeCost(long timeCost) {
+        mTimeCost = timeCost;
     }
 
     @Override
@@ -63,7 +86,11 @@ public class TimeCostInfo {
                 "name='" + name + '\'' +
                 ", mStartMilliTime=" + mStartMilliTime +
                 ", mEndMilliTime=" + mEndMilliTime +
-                ", exceedMilliTime=" + exceedMilliTime +
+                ", mExceedMilliTime=" + mExceedMilliTime +
                 '}';
+    }
+
+    public boolean isExceed() {
+        return mTimeCost > mExceedMilliTime;
     }
 }

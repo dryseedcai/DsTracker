@@ -2,6 +2,9 @@ package com.dryseed.dstracker;
 
 import android.content.Context;
 
+/**
+ * @author caiminming
+ */
 public class TimeCostContext {
     private static Context sApplicationContext;
 
