@@ -11,15 +11,25 @@ import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
+import com.dryseed.dstracker.utils.Log
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 
+import java.util.jar.JarEntry
+import java.util.jar.JarFile
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
+
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 
+/**
+ * @author caiminming
+ */
 class DsTransform extends Transform {
     private static AppExtension android
     private static Project project
@@ -88,11 +98,11 @@ class DsTransform extends Transform {
      */
     @Override
     void transform(Context context,
-                          Collection<TransformInput> inputs,
-                          Collection<TransformInput> referencedInputs,
-                          TransformOutputProvider outputProvider,
-                          boolean isIncremental) throws IOException, TransformException, InterruptedException {
-        println String.format("----------------%s %s--------------", getName(), " transform start")
+                   Collection<TransformInput> inputs,
+                   Collection<TransformInput> referencedInputs,
+                   TransformOutputProvider outputProvider,
+                   boolean isIncremental) throws IOException, TransformException, InterruptedException {
+        Log.info(String.format("----------------%s %s--------------", getName(), " transform start"))
 
         android = project.extensions.getByType(AppExtension)
 
@@ -108,17 +118,13 @@ class DsTransform extends Transform {
                 DirectoryInput directoryInput ->
                     //文件夹里面包含的是我们手写的类以及R.class、BuildConfig.class以及R$XXX.class等
 
-                    //注入代码
-                    //DsInjects.inject(directoryInput.file.absolutePath, mProject)
-
                     //是否是目录
                     if (directoryInput.file.isDirectory()) {
                         //遍历目录
                         directoryInput.file.eachFileRecurse {
                             File file ->
-                                def filename = file.name;
                                 def name = file.name
-                                //这里进行我们的处理 TODO
+
                                 if (name.endsWith(".class") && !name.startsWith("R\$") &&
                                         !"R.class".equals(name) && !"BuildConfig.class".equals(name)) {
 
@@ -128,7 +134,6 @@ class DsTransform extends Transform {
                                     def className = name.split(".class")[0]
                                     ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter)
                                     classReader.accept(cv, EXPAND_FRAMES)
-                                    //classReader.accept(new AnnotationScanner(Opcodes.ASM5),EXPAND_FRAMES)
                                     byte[] code = classWriter.toByteArray()
                                     FileOutputStream fos = new FileOutputStream(
                                             file.parentFile.absolutePath + File.separator + name)
@@ -140,8 +145,12 @@ class DsTransform extends Transform {
                     }
 
                     // 获取output目录
-                    def dest = outputProvider.getContentLocation(directoryInput.name,
-                            directoryInput.contentTypes, directoryInput.scopes, Format.DIRECTORY)
+                    def dest = outputProvider.getContentLocation(
+                            directoryInput.name,
+                            directoryInput.contentTypes,
+                            directoryInput.scopes,
+                            Format.DIRECTORY
+                    )
 
                     // 将input的目录复制到output指定目录
                     FileUtils.copyDirectory(directoryInput.file, dest)
@@ -150,21 +159,90 @@ class DsTransform extends Transform {
             //对类型为jar文件的input进行遍历。
             input.jarInputs.each { JarInput jarInput ->
                 // 重命名输出文件（同目录copyFile会冲突）
-                def jarName = jarInput.name
-                //println("jar = " + jarInput.file.getAbsolutePath())
+                def jarInputName = jarInput.name
+                def jarFilePath = jarInput.file.getAbsolutePath()
                 def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
-                if (jarName.endsWith(".jar")) {
-                    jarName = jarName.substring(0, jarName.length() - 4)
+                Log.info(String.format("jarInput.name : %s | jarFileName : %s | jarPath : %s",
+                        jarInputName,
+                        jarInput.file.name,
+                        jarFilePath
+                ))
+                if (jarInputName.endsWith(".jar")) {
+                    jarInputName = jarInputName.substring(0, jarInputName.length() - 4)
                 }
 
-                // TODO:
+                File tmpFile = null
+                if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
+                    JarFile jarFile = new JarFile(jarInput.file)
+                    Enumeration enumeration = jarFile.entries()
+                    Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + "testlibrary.jar")
+                    tmpFile = new File(jarInput.file.getParent() + File.separator + "123.jar")
+                    //避免上次的缓存被重复插入
+                    if (tmpFile.exists()) {
+                        tmpFile.delete()
+                    }
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
+                    //用于保存
+                    ArrayList<String> processorList = new ArrayList<>()
+                    while (enumeration.hasMoreElements()) {
+                        JarEntry jarEntry = (JarEntry) enumeration.nextElement()
+                        String entryName = jarEntry.getName()
+                        ZipEntry zipEntry = new ZipEntry(entryName)
+
+                        //Log.info(String.format("entryName : %s", entryName))
+
+                        InputStream inputStream = jarFile.getInputStream(jarEntry)
+
+                        //插桩class
+                        if (entryName.endsWith(".class") && !entryName.contains("R\$") &&
+                                !entryName.contains("R.class") && !entryName.contains("BuildConfig.class")) {
+                            //class文件处理
+                            jarOutputStream.putNextEntry(zipEntry)
+                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
+                            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                            def className = entryName.split(".class")[0]
+                            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter)
+                            classReader.accept(cv, EXPAND_FRAMES)
+                            byte[] code = classWriter.toByteArray()
+                            jarOutputStream.write(code)
+
+                        } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
+                            if (!processorList.contains(entryName)) {
+                                processorList.add(entryName)
+                                jarOutputStream.putNextEntry(zipEntry)
+                                jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                            } else {
+                                println "duplicate entry:" + entryName
+                            }
+                        } else {
+
+                            jarOutputStream.putNextEntry(zipEntry)
+                            jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                        }
+
+                        jarOutputStream.closeEntry()
+                    }
+
+                    jarOutputStream.close()
+                    jarFile.close()
+                }
 
                 //生成输出路径
-                def dest = outputProvider.getContentLocation(jarName + md5Name, jarInput.contentTypes, jarInput.scopes, Format.JAR)
+                def dest = outputProvider.getContentLocation(
+                        jarInputName + md5Name,
+                        jarInput.contentTypes,
+                        jarInput.scopes,
+                        Format.JAR
+                )
                 //将输入内容复制到输出
-                FileUtils.copyFile(jarInput.file, dest)
+                if (tmpFile == null) {
+                    FileUtils.copyFile(jarInput.file, dest)
+                } else {
+                    FileUtils.copyFile(tmpFile, dest)
+                    tmpFile.delete()
+                }
             }
         }
-        System.out.println(String.format("----------------%s %s--------------", getName(), " transform end"));
+        Log.info(String.format("----------------%s %s--------------", getName(), " transform end"))
     }
 }

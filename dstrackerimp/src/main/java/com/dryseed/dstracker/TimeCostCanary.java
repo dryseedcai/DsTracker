@@ -131,7 +131,6 @@ public class TimeCostCanary {
         // Blocks on IPC.
         packageManager.setComponentEnabledSetting(component, newState, DONT_KILL_APP);
     }
-    // end of lines copied from LeakCanary
 
     private static void executeOnFileIoThread(Runnable runnable) {
         fileIoExecutor.execute(runnable);
@@ -152,4 +151,5 @@ public class TimeCostCanary {
             }
         });
     }
+    // end of lines copied from LeakCanary
 }

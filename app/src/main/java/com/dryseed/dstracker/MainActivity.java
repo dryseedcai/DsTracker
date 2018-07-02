@@ -4,9 +4,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 import com.dryseed.dstracker.annotations.TimeCost;
+import com.example.testlibrary.TestLibrary;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,7 +28,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @TimeCost(name = "myMethod2")
-    private void myMethod2() {
+    public void myMethod2(View view) {
 
+    }
+
+    public void myMethod3(View view) {
+        TestLibrary testLibrary = new TestLibrary();
+        testLibrary.testLibraryMethod();
     }
 }

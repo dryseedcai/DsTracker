@@ -12,6 +12,22 @@
         android:layout_height="60dp"
         android:gravity="center"
         android:onClick="myMethod"
-        android:text="Hello World!" />
+        android:text="Btn1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod2"
+        android:text="Btn2" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod3"
+        android:text="Btn3" />
 
 </LinearLayout>

@@ -1,1 +1,1 @@
-include ':app', ':buildsrc', ':dstrackerimp'/*, ':gradle-plugin'*/
+include ':app', ':buildsrc', ':dstrackerimp', ':testlibrary'/*, ':gradle-plugin'*/

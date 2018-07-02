@@ -7,10 +7,12 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.TaskState
 import org.gradle.util.Clock
 
+/**
+ * @author caiminming
+ */
+class TaskTimeCostListener implements TaskExecutionListener, BuildListener {
 
-public class TaskTimeCostListener implements TaskExecutionListener, BuildListener {
-
-    private Clock clock;
+    private Clock clock
     private times = []
 
     @Override
@@ -46,13 +48,12 @@ public class TaskTimeCostListener implements TaskExecutionListener, BuildListene
 
     @Override
     void beforeExecute(Task task) {
-        clock = new Clock();
+        clock = new Clock()
     }
 
     @Override
     void afterExecute(Task task, TaskState taskState) {
-        def ms = clock.timeInMs;
-        times.add([ms, task.path]);
-        //task.project.logger.warn "${task.path} spend ${ms}ms"
+        def ms = clock.timeInMs
+        times.add([ms, task.path])
     }
 }

@@ -27,7 +27,7 @@ import static android.os.Build.VERSION_CODES.O;
  */
 final class NotificationService implements TimeCostInterceptor {
 
-    private static final String TAG = "NotificationService";
+    private static final String TAG = "TimeCostNotificationService";
 
     @Override
     public void onExceed(Context context, TimeCostInfo timeCostInfo) {

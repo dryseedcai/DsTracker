@@ -5,10 +5,13 @@ import com.dryseed.dstracker.utils.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+/**
+ * @author caiminming
+ */
 class DsPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
-        println "================== DsPlugin Start ======================="
+        Log.info("================== DsPlugin Start =======================")
 
         project.extensions.create('dsTrackerConfig', DsPluginParams)
 
@@ -17,7 +20,12 @@ class DsPlugin implements Plugin<Project> {
         DsTransform transform = new DsTransform(project)
         android.registerTransform(transform)
 
-        println(String.format("dsTrackerConfig : isDebug = %b | watchTaskTimeCost = %b", project.dsTrackerConfig.isDebug, project.dsTrackerConfig.watchTaskTimeCost))
+        Log.info(String.format(
+                "dsTrackerConfig : isDebug = %b | watchTaskTimeCost = %b",
+                project.dsTrackerConfig.isDebug,
+                project.dsTrackerConfig.watchTaskTimeCost
+        ))
+
         project.afterEvaluate {
             Log.setIsDebug(project.dsTrackerConfig.isDebug)
             if (project.dsTrackerConfig.watchTaskTimeCost) {
