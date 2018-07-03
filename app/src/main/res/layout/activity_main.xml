@@ -31,4 +31,12 @@
         android:onClick="myMethod3"
         android:text="jar -> @TimeCost(milliTime = 300L)" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod4"
+        android:text="Work Thread" />
+
 </LinearLayout>

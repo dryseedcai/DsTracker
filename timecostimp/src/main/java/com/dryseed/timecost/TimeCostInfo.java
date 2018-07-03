@@ -8,32 +8,35 @@ public class TimeCostInfo {
      * Method Name
      */
     private String name;
+
     /**
      * Start Time
      */
     private long mStartMilliTime;
+
     /**
      * End Time
      */
     private long mEndMilliTime;
+
     /**
      * Exceed Time
      */
     private long mExceedMilliTime = 0;
+
     /**
      * Cost Time
      */
     private long mTimeCost;
 
     public TimeCostInfo(String name, long curMilliTime) {
-        this.name = name;
-        this.mStartMilliTime = curMilliTime;
+        this(name, curMilliTime, TimeCostCanary.get().getConfig().getMilliExceedTime());
     }
 
     public TimeCostInfo(String name, long curMilliTime, long excceedMilliTime) {
         this.name = name;
         this.mStartMilliTime = curMilliTime;
-        this.mExceedMilliTime = excceedMilliTime;
+        this.mExceedMilliTime = excceedMilliTime <= 0 ? TimeCostCanary.get().getConfig().getMilliExceedTime() : excceedMilliTime;
     }
 
     public String getName() {
@@ -45,7 +48,7 @@ public class TimeCostInfo {
     }
 
     public static TimeCostInfo parse(String name, long curMilliTime) {
-        return new TimeCostInfo(name, curMilliTime, TimeCostCanary.get().getConfig().getMilliExceedTime());
+        return parse(name, curMilliTime, 0);
     }
 
     public static TimeCostInfo parse(String name, long curMilliTime, long excceedMilliTime) {

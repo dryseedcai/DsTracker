@@ -2,6 +2,8 @@ package com.dryseed.timecost;
 
 import android.util.Log;
 
+import com.dryseed.timecost.utils.ThreadUtils;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,10 +18,12 @@ public class TimeCostCore {
      * TimeCostCore Instance
      */
     private static TimeCostCore sInstance;
+
     /**
      * Interceptor Chain for processing exceeded logic
      */
     private List<TimeCostInterceptor> mInterceptorChain = new LinkedList<>();
+
     /**
      * Save TimeCostInfo during the method invocation
      */
@@ -43,13 +47,28 @@ public class TimeCostCore {
     }
 
     /**
-     * Set StartTime
+     * chech the thread whether is valid
      *
-     * @param methodName
-     * @param curTime
+     * @param monitorOnlyMainThread determined by TimeCost Annotation
+     * @return true if the thread is valid
      */
-    public void setStartTime(String methodName, long curTime) {
-        mTimeCostInfoHashMap.put(methodName, TimeCostInfo.parse(methodName, curTime));
+    private boolean checkThread(boolean monitorOnlyMainThread) {
+        // monitorOnlyMainThread is true
+        if (monitorOnlyMainThread && ThreadUtils.isMainThread()) {
+            return true;
+        } else if (monitorOnlyMainThread) {
+            return false;
+        }
+
+        // monitorOnlyMainThread is false
+        if (TimeCostCanary.get().getConfig().isMonitorOnlyMainThread()
+                && ThreadUtils.isMainThread()) {
+            return true;
+        } else if (TimeCostCanary.get().getConfig().isMonitorAllThread()) {
+            return true;
+        }
+        return false;
+
     }
 
     /**
@@ -59,7 +78,11 @@ public class TimeCostCore {
      * @param curTime
      * @param exceededTime
      */
-    public void setStartTime(String methodName, long curTime, long exceededTime) {
+    public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
+        if (!checkThread(monitorOnlyMainThread)) {
+            Log.d(TAG, "thread is not valid !!!");
+            return;
+        }
         mTimeCostInfoHashMap.put(methodName, TimeCostInfo.parse(methodName, curTime, exceededTime));
     }
 

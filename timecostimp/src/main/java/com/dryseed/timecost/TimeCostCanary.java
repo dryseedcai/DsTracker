@@ -1,23 +1,12 @@
 package com.dryseed.timecost;
 
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.os.Looper;
 import android.util.Log;
 
-import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.ui.TimeCostDetailActivity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
-import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
-import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 /**
  * @author caiminming
@@ -29,18 +18,22 @@ public class TimeCostCanary {
      * TimeCostCanary Instance
      */
     private static volatile TimeCostCanary sInstance;
+
     /**
      * TimeCostConfig Instance
      */
     private TimeCostConfig mTimeCostConfig;
+
     /**
      * Application Context
      */
     private static Context sApplicationContext;
+
     /**
      * TimeCostCore process time-cost logic
      */
     private TimeCostCore mTimeCostCore;
+
     /**
      * Flag whether TimeCostCanary is running
      */
@@ -70,6 +63,7 @@ public class TimeCostCanary {
 
     /**
      * Get {@link TimeCostCanary} singleton.
+     * Do not modify the method name unless you are compatible with asm code
      *
      * @return {@link TimeCostCanary} instance
      */
@@ -123,36 +117,22 @@ public class TimeCostCanary {
     }
 
     /**
-     * Set StartTime
-     *
-     * @param methodName
-     * @param curTime
-     */
-    public void setStartTime(String methodName, long curTime) {
-        Log.d(TAG, String.format("setStartTime : %s", methodName));
-        if (!mIsRunning) {
-            return;
-        }
-        mTimeCostCore.setStartTime(methodName, curTime);
-    }
-
-    /**
-     * Set StartTime
+     * Set StartTime , Called by Asm Code
      *
      * @param methodName
      * @param curTime
      * @param exceededTime
      */
-    public void setStartTime(String methodName, long curTime, long exceededTime) {
+    public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
         Log.d(TAG, String.format("setStartTime2 : %s", methodName));
         if (!mIsRunning) {
             return;
         }
-        mTimeCostCore.setStartTime(methodName, curTime, exceededTime);
+        mTimeCostCore.setStartTime(methodName, curTime, exceededTime, monitorOnlyMainThread);
     }
 
     /**
-     * Set EndTime
+     * Set EndTime , Called by Asm Code
      *
      * @param methodName
      * @param time
@@ -171,11 +151,11 @@ public class TimeCostCanary {
     private static void setEnabledBlocking(Context appContext,
                                            Class<?> componentClass,
                                            boolean enabled) {
-        ComponentName component = new ComponentName(appContext, componentClass);
+        /*ComponentName component = new ComponentName(appContext, componentClass);
         PackageManager packageManager = appContext.getPackageManager();
         int newState = enabled ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED;
         // Blocks on IPC.
-        packageManager.setComponentEnabledSetting(component, newState, DONT_KILL_APP);
+        packageManager.setComponentEnabledSetting(component, newState, DONT_KILL_APP);*/
     }
 
     private static void executeOnFileIoThread(Runnable runnable) {

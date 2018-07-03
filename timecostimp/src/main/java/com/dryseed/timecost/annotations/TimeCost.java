@@ -14,4 +14,6 @@ public @interface TimeCost {
     String name() default "";
 
     long milliTime() default 1000L;
+
+    boolean monitorOnlyMainThread() default false;
 }
