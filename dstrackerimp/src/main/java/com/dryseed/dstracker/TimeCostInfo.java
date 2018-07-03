@@ -4,6 +4,9 @@ package com.dryseed.dstracker;
  * @author caiminming
  */
 public class TimeCostInfo {
+    /**
+     * Method Name
+     */
     private String name;
     /**
      * Start Time
@@ -17,7 +20,9 @@ public class TimeCostInfo {
      * Exceed Time
      */
     private long mExceedMilliTime = 0;
-
+    /**
+     * Cost Time
+     */
     private long mTimeCost;
 
     public TimeCostInfo(String name, long curMilliTime) {
@@ -40,7 +45,7 @@ public class TimeCostInfo {
     }
 
     public static TimeCostInfo parse(String name, long curMilliTime) {
-        return new TimeCostInfo(name, curMilliTime, 1000L);
+        return new TimeCostInfo(name, curMilliTime, TimeCostCanary.get().getConfig().getMilliExceedTime());
     }
 
     public static TimeCostInfo parse(String name, long curMilliTime, long excceedMilliTime) {

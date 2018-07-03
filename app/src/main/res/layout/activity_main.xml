@@ -7,27 +7,28 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
+    <Button
         android:layout_width="match_parent"
         android:layout_height="60dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod"
-        android:text="Btn1" />
+        android:text=" @TimeCost(name = &quot;myMethod&quot;, milliTime = 500L)" />
 
-    <TextView
+    <Button
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod2"
-        android:text="Btn2" />
+        android:text=" @TimeCost(name = &quot;myMethod2&quot;)" />
 
-    <TextView
+    <Button
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod3"
-        android:text="Btn3" />
+        android:text="jar -> @TimeCost(milliTime = 300L)" />
 
 </LinearLayout>

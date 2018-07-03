@@ -25,19 +25,45 @@ import static android.content.pm.PackageManager.DONT_KILL_APP;
 public class TimeCostCanary {
     public static final String TAG = "TimeCostCanary";
 
+    /**
+     * TimeCostCanary Instance
+     */
     private static volatile TimeCostCanary sInstance;
+    /**
+     * TimeCostConfig Instance
+     */
+    private TimeCostConfig mTimeCostConfig;
+    /**
+     * Application Context
+     */
     private static Context sApplicationContext;
-
+    /**
+     * TimeCostCore process time-cost logic
+     */
     private TimeCostCore mTimeCostCore;
+    /**
+     * Flag whether TimeCostCanary is running
+     */
     private boolean mIsRunning = true;
 
-    public static void install(Context applicationContext) {
+    /**
+     * Init TimeCostCanary
+     *
+     * @param applicationContext
+     * @return
+     */
+    public static TimeCostCanary install(Context applicationContext) {
         sApplicationContext = applicationContext;
         setEnabled(applicationContext, TimeCostDetailActivity.class, true);
+        return get();
     }
 
-    public TimeCostCanary() {
+    /**
+     * Private TimeCostCanary Constructor
+     */
+    private TimeCostCanary() {
         TimeCostContext.init(sApplicationContext);
+        mTimeCostConfig = new TimeCostConfig.Builder().build();
         mTimeCostCore = TimeCostCore.getInstance();
         mTimeCostCore.addInterceptor(new NotificationService());
     }
@@ -59,7 +85,27 @@ public class TimeCostCanary {
     }
 
     /**
-     * Start monitoring.
+     * Get TimeCostConfig
+     *
+     * @return
+     */
+    public TimeCostConfig getConfig() {
+        return mTimeCostConfig;
+    }
+
+    /**
+     * Set TimeCostConfig
+     *
+     * @param timeCostConfig
+     * @return
+     */
+    public TimeCostCanary config(TimeCostConfig timeCostConfig) {
+        mTimeCostConfig = timeCostConfig;
+        return this;
+    }
+
+    /**
+     * start monitoring.
      */
     public void start() {
         if (!mIsRunning) {

@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 
-
 /**
  * @User caiminming
  * <p>

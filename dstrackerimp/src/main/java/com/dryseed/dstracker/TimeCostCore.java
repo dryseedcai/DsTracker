@@ -12,9 +12,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TimeCostCore {
     public static final String TAG = "TimeCostCore";
 
+    /**
+     * TimeCostCore Instance
+     */
     private static TimeCostCore sInstance;
-
+    /**
+     * Interceptor Chain for processing exceeded logic
+     */
     private List<TimeCostInterceptor> mInterceptorChain = new LinkedList<>();
+    /**
+     * Save TimeCostInfo during the method invocation
+     */
     public ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap = new ConcurrentHashMap<>();
 
 
@@ -79,8 +87,6 @@ public class TimeCostCore {
         if (null == timeCostInfo) {
             return;
         }
-
-        Log.d(TAG, "handleCost " + timeCostInfo.toString());
 
         if (timeCostInfo.isExceed()) {
             Log.w(TAG, String.format(

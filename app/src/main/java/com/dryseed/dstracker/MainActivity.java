@@ -2,7 +2,6 @@ package com.dryseed.dstracker;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.dryseed.dstracker.annotations.TimeCost;
@@ -19,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
 
     @TimeCost(name = "myMethod", milliTime = 500L)
     public void myMethod(View view) {
-        Log.d("TimeCost", "myMethod");
         try {
             Thread.sleep(1200);
         } catch (InterruptedException e) {
@@ -29,7 +27,11 @@ public class MainActivity extends AppCompatActivity {
 
     @TimeCost(name = "myMethod2")
     public void myMethod2(View view) {
-
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     public void myMethod3(View view) {

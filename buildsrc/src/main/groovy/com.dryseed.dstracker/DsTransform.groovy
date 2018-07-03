@@ -175,7 +175,7 @@ class DsTransform extends Transform {
                 if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
                     JarFile jarFile = new JarFile(jarInput.file)
                     Enumeration enumeration = jarFile.entries()
-                    Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + "testlibrary.jar")
+                    //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
                     tmpFile = new File(jarInput.file.getParent() + File.separator + "123.jar")
                     //避免上次的缓存被重复插入
                     if (tmpFile.exists()) {
