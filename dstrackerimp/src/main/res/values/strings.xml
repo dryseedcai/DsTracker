@@ -1,6 +1,0 @@
-<resources>
-    <string name="app_name">dstrackerimp</string>
-    <string name="time_cost_canary_detail_activity_label">TimeCost</string>
-    <string name="time_cost_canary_class_has_blocked">cost %1$d (%2$d) ms</string>
-    <string name="time_cost_canary_notification_message">Click for more details</string>
-</resources>

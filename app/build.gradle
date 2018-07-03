@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.dryseed.dstracker.gradle.dsplugin'
+apply plugin: 'com.dryseed.timecost.gradle.dsplugin'
 
 repositories {
     //在libs目录下能找到aar文件
@@ -12,7 +12,7 @@ android {
     compileSdkVersion 26
     buildToolsVersion '27.0.1'
     defaultConfig {
-        applicationId "com.dryseed.dstracker"
+        applicationId "com.dryseed.timecost"
         minSdkVersion 21
         targetSdkVersion 26
         versionCode 1
@@ -35,13 +35,13 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:1.0.2'
     androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    compile project(':dstrackerimp')
+    compile project(':timecostimp')
 
     //compile project(':testlibrary')
     //compile(name: 'testlibrary', ext: 'aar')
 }
 
-dsTrackerConfig {
+timeCostConfig {
     isDebug = true
     watchTaskTimeCost = true
 }

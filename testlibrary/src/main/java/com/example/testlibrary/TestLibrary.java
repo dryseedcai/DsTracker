@@ -1,6 +1,6 @@
 package com.example.testlibrary;
 
-import com.dryseed.dstracker.annotations.TimeCost;
+import com.dryseed.timecost.annotations.TimeCost;
 
 public class TestLibrary {
     @TimeCost(milliTime = 300L)
