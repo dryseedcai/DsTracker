@@ -6,4 +6,6 @@ package com.dryseed.timecost
 class DsPluginParams {
     boolean isDebug = true
     boolean watchTaskTimeCost = true
+    HashSet<String> whitePackageList = []
+    boolean autoInject = false
 }

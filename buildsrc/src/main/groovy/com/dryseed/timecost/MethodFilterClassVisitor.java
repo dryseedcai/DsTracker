@@ -37,19 +37,21 @@ public class MethodFilterClassVisitor extends ClassVisitor {
     private String mClassName;
     private ConcurrentHashMap mAnnotationHashMap = new ConcurrentHashMap();
     boolean mIsInject = false;
+    boolean mIsAutoInject = false;
 
-    public MethodFilterClassVisitor(String className, ClassVisitor cv) {
+    public MethodFilterClassVisitor(String className, ClassVisitor cv, boolean isAutoInject) {
         super(Opcodes.ASM5, cv);
         this.mClassName = className;
+        this.mIsAutoInject = isAutoInject;
     }
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
-        /*Log.info(String.format(
+        Log.info(String.format(
                 "MethodFilterClassVisitor.visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
                 version, access, name, signature, superName, interfaces)
-        );*/
+        );
     }
 
     @Override
@@ -85,9 +87,9 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
             @Override
             protected void onMethodEnter() {
-                Log.info("AdviceAdapter onMethodEnter");
+                //Log.info("AdviceAdapter onMethodEnter");
                 //统计方法耗时
-                if (mIsInject && mAnnotationHashMap != null) {
+                if (mIsAutoInject || (mIsInject && mAnnotationHashMap != null)) {
                     if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_NAME)) {
                         mMethodName = (String) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_NAME);
                     } else {
@@ -114,7 +116,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             @Override
             protected void onMethodExit(int i) {
                 //Log.info("AdviceAdapter onMethodExit");
-                if (mIsInject) {
+                if (mIsAutoInject || mIsInject) {
                     generateEndCodeWithNoParam(mv, mMethodName);
                     mIsInject = false;
                 }
@@ -129,6 +131,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 }
                 return new AnnotationMethodsArrayValueScanner();
             }
+
         };
         return methodVisitor;
     }
