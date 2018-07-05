@@ -40,7 +40,11 @@
     }
     ```
 
-
+* Release No Operation
+    ```
+    debugCompile project(':timecostimp')
+    releaseCompile project(':timecostimp-no-op')
+    ```
 
 
 
