@@ -121,6 +121,9 @@ public class TimeCostCore {
 
             if (!mInterceptorChain.isEmpty()) {
                 for (TimeCostInterceptor interceptor : mInterceptorChain) {
+                    if (null == TimeCostContext.getContext()) {
+                        return;
+                    }
                     interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
                 }
             }

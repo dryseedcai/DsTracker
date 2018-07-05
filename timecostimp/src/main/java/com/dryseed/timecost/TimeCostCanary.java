@@ -29,6 +29,8 @@ public class TimeCostCanary {
      */
     private static Context sApplicationContext;
 
+    private static boolean sHasInstalled = false;
+
     /**
      * TimeCostCore process time-cost logic
      */
@@ -39,6 +41,7 @@ public class TimeCostCanary {
      */
     private boolean mIsRunning = true;
 
+
     /**
      * Init TimeCostCanary
      *
@@ -46,8 +49,12 @@ public class TimeCostCanary {
      * @return
      */
     public static TimeCostCanary install(Context applicationContext) {
+        sHasInstalled = true;
         sApplicationContext = applicationContext;
         setEnabled(applicationContext, TimeCostDetailActivity.class, true);
+        if (sInstance != null) {
+            sInstance = new TimeCostCanary();
+        }
         return get();
     }
 
@@ -125,7 +132,7 @@ public class TimeCostCanary {
      */
     public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
         Log.d(TAG, String.format("setStartTime2 : %s", methodName));
-        if (!mIsRunning) {
+        if (!sHasInstalled || !mIsRunning) {
             return;
         }
         mTimeCostCore.setStartTime(methodName, curTime, exceededTime, monitorOnlyMainThread);
@@ -139,7 +146,7 @@ public class TimeCostCanary {
      */
     public void setEndTime(String methodName, long time) {
         Log.d(TAG, String.format("setEndTime : %s", methodName));
-        if (!mIsRunning) {
+        if (!sHasInstalled || !mIsRunning) {
             return;
         }
         mTimeCostCore.setEndTime(methodName, time);

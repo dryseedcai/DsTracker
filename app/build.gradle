@@ -47,7 +47,7 @@ timeCostConfig {
     //this is a kit feature of the plugin, set it true to see the time consume of this build
     watchTaskTimeCost = true
     // the plugin will only inject package / class defined in whitePackageList
-    whitePackageList = ['com.dryseed.timecost']
+    whitePackageList = ['com.dryseed.testtimecost', 'com.dryseed.testwhitelist']
     // the plugin will inject automatically based on whitePackageList
     autoInject = true
 }

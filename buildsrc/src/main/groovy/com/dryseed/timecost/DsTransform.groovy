@@ -35,8 +35,9 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 class DsTransform extends Transform {
     private static AppExtension android
     private static Project project
-    private static HashSet<String> targetPackages = []
+    private static HashSet<String> whitePackageList = []
     private static boolean isAutoInject = false
+    private static HashSet<String> blackPackageList = []
 
     DsTransform(Project project) {
         DsTransform.project = project
@@ -112,12 +113,16 @@ class DsTransform extends Transform {
 
         // auto inject
         isAutoInject = project.timeCostConfig.autoInject
+        Log.info("===> config -> autoInject : ${isAutoInject}")
+
+        // black list
+        blackPackageList.add(Constants.TIME_COST_PACKAGE_NAME)
 
         // 3rd party JAR packages that want our plugin to inject.
-        HashSet<String> whitePackageList = project.timeCostConfig.whitePackageList
-        if (whitePackageList != null) {
-            targetPackages.addAll(whitePackageList)
-            Log.info("targetPackages : ${targetPackages}")
+        HashSet<String> whiteConfigPackageList = project.timeCostConfig.whitePackageList
+        if (whiteConfigPackageList != null) {
+            whitePackageList.addAll(whiteConfigPackageList)
+            Log.info("===> config -> whitePackageList : ${whitePackageList}")
         }
 
         //删除之前的输出
@@ -133,32 +138,32 @@ class DsTransform extends Transform {
                     //文件夹里面包含的是我们手写的类以及R.class、BuildConfig.class以及R$XXX.class等
 
                     //是否是目录
-//                    if (directoryInput.file.isDirectory()) {
-//                        //遍历目录
-//                        directoryInput.file.eachFileRecurse {
-//                            File file ->
-//                                def name = file.name
-//                                // log : file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug\com\dryseed\timecost\MainActivity.class
-//                                // log : file.name = MainActivity.class
-//                                // log : directoryInput.file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug
-//                                // Log.info("file.absolutePath = ${file.absolutePath}")
-//                                // Log.info("file.name = ${file.name}")
-//                                Log.info("directoryInput.file.absolutePath = ${directoryInput.file.absolutePath}")
-//                                if (shouldModifyFile(file, directoryInput.file)) {
-//                                    Log.info("filePath = ${file.absolutePath}")
-//                                    ClassReader classReader = new ClassReader(file.bytes)
-//                                    ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-//                                    def className = name.split(".class")[0]
-//                                    ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
-//                                    classReader.accept(cv, EXPAND_FRAMES)
-//                                    byte[] code = classWriter.toByteArray()
-//                                    FileOutputStream fos = new FileOutputStream(
-//                                            file.parentFile.absolutePath + File.separator + name)
-//                                    fos.write(code)
-//                                    fos.close()
-//                                }
-//                        }
-//                    }
+                    if (directoryInput.file.isDirectory()) {
+                        //遍历目录
+                        directoryInput.file.eachFileRecurse {
+                            File file ->
+                                def name = file.name
+                                // log : file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug\com\dryseed\timecost\MainActivity.class
+                                // log : file.name = MainActivity.class
+                                // log : directoryInput.file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug
+                                // Log.info("file.absolutePath = ${file.absolutePath}")
+                                // Log.info("file.name = ${file.name}")
+                                // Log.info("directoryInput.file.absolutePath = ${directoryInput.file.absolutePath}")
+                                if (shouldModifyFile(file, directoryInput.file)) {
+                                    Log.info("filePath = ${file.absolutePath}")
+                                    ClassReader classReader = new ClassReader(file.bytes)
+                                    ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                                    def className = name.split(".class")[0]
+                                    ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
+                                    classReader.accept(cv, EXPAND_FRAMES)
+                                    byte[] code = classWriter.toByteArray()
+                                    FileOutputStream fos = new FileOutputStream(
+                                            file.parentFile.absolutePath + File.separator + name)
+                                    fos.write(code)
+                                    fos.close()
+                                }
+                        }
+                    }
 
                     // 获取output目录
                     def dest = outputProvider.getContentLocation(
@@ -188,61 +193,62 @@ class DsTransform extends Transform {
                 }
 
                 File tmpFile = null
-//                if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
-//                    JarFile jarFile = new JarFile(jarInput.file)
-//                    Enumeration enumeration = jarFile.entries()
-//                    //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
-//                    tmpFile = new File(jarInput.file.getParent() + File.separator + Constants.JAR_TMP_FILE_NAME)
-//                    //避免上次的缓存被重复插入
-//                    if (tmpFile.exists()) {
-//                        tmpFile.delete()
-//                    }
-//                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
-//                    //用于保存
-//                    ArrayList<String> processorList = new ArrayList<>()
-//                    while (enumeration.hasMoreElements()) {
-//                        JarEntry jarEntry = (JarEntry) enumeration.nextElement()
-//                        String entryName = jarEntry.getName()
-//                        ZipEntry zipEntry = new ZipEntry(entryName)
-//
-//                        // log : entryName : com/dryseed/timecost/TimeCostCanary.class
-//                        // Log.info(String.format("entryName : %s", entryName))
-//
-//                        InputStream inputStream = jarFile.getInputStream(jarEntry)
-//
-//                        // log : simpleEntryName : com.dryseed.timecost.TimeCostCanary
-//                        String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
-//
-//                        //插桩class
-//                        if (shouldModifyClass(entryName, simpleEntryName)) {
-//                            //class文件处理
-//                            jarOutputStream.putNextEntry(zipEntry)
-//                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
-//                            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-//                            def className = entryName.split(".class")[0]
-//                            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
-//                            classReader.accept(cv, EXPAND_FRAMES)
-//                            byte[] code = classWriter.toByteArray()
-//                            jarOutputStream.write(code)
-//                        } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
-//                            if (!processorList.contains(entryName)) {
-//                                processorList.add(entryName)
-//                                jarOutputStream.putNextEntry(zipEntry)
-//                                jarOutputStream.write(IOUtils.toByteArray(inputStream))
-//                            } else {
-//                                Log.info("duplicate entry : ${entryName}")
-//                            }
-//                        } else {
-//                            jarOutputStream.putNextEntry(zipEntry)
-//                            jarOutputStream.write(IOUtils.toByteArray(inputStream))
-//                        }
-//
-//                        jarOutputStream.closeEntry()
-//                    }
-//
-//                    jarOutputStream.close()
-//                    jarFile.close()
-//                }
+                if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
+                    JarFile jarFile = new JarFile(jarInput.file)
+                    Enumeration enumeration = jarFile.entries()
+                    //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
+                    tmpFile = new File(jarInput.file.getParent() + File.separator + Constants.JAR_TMP_FILE_NAME)
+                    //避免上次的缓存被重复插入
+                    if (tmpFile.exists()) {
+                        tmpFile.delete()
+                    }
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
+                    //用于保存
+                    ArrayList<String> processorList = new ArrayList<>()
+                    while (enumeration.hasMoreElements()) {
+                        JarEntry jarEntry = (JarEntry) enumeration.nextElement()
+                        String entryName = jarEntry.getName()
+                        ZipEntry zipEntry = new ZipEntry(entryName)
+
+                        // log : entryName : com/dryseed/timecost/TimeCostCanary.class
+                        // Log.info(String.format("entryName : %s", entryName))
+
+                        InputStream inputStream = jarFile.getInputStream(jarEntry)
+
+                        // log : simpleEntryName : com.dryseed.timecost.TimeCostCanary
+                        String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
+
+                        //插桩class
+                        if (shouldModifyClass(entryName, simpleEntryName)) {
+                            //class文件处理
+                            Log.info("jar class : ${simpleEntryName}")
+                            jarOutputStream.putNextEntry(zipEntry)
+                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
+                            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                            def className = entryName.split(".class")[0]
+                            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
+                            classReader.accept(cv, EXPAND_FRAMES)
+                            byte[] code = classWriter.toByteArray()
+                            jarOutputStream.write(code)
+                        } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
+                            if (!processorList.contains(entryName)) {
+                                processorList.add(entryName)
+                                jarOutputStream.putNextEntry(zipEntry)
+                                jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                            } else {
+                                Log.info("duplicate entry : ${entryName}")
+                            }
+                        } else {
+                            jarOutputStream.putNextEntry(zipEntry)
+                            jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                        }
+
+                        jarOutputStream.closeEntry()
+                    }
+
+                    jarOutputStream.close()
+                    jarFile.close()
+                }
 
                 //生成输出路径
                 def dest = outputProvider.getContentLocation(
@@ -296,26 +302,42 @@ class DsTransform extends Transform {
         }
 
         if (name.endsWith(".class")) {
-            if (targetPackages.isEmpty() && isAutoInject) {
+            if (whitePackageList.isEmpty() && isAutoInject) {
                 // auto inject is based on white list
+                Log.info("return false : auto inject is based on white list - ${className}")
                 return false
             }
 
-            if (targetPackages.isEmpty()) {
+            if (null != blackPackageList && !blackPackageList.isEmpty()) {
+                // has black list
+                Iterator<String> iterator = blackPackageList.iterator()
+                while (iterator.hasNext()) {
+                    String packagename = iterator.next()
+                    if (className.contains(packagename)) {
+                        Log.info("return false : hit black list ${className} - ${packagename}")
+                        return false
+                    }
+                }
+            }
+
+            if (whitePackageList.isEmpty()) {
                 // no white list, all class is valid
+                Log.info("return true : no white list, all class is valid - ${className}")
                 return true
             }
 
             // has white list
-            Iterator<String> iterator = targetPackages.iterator()
+            Iterator<String> iterator = whitePackageList.iterator()
             while (iterator.hasNext()) {
                 String packagename = iterator.next()
                 //Log.info("=================================== packagename : ${packagename} | name : ${className}")
                 if (className.contains(packagename)) {
-                    Log.info("class is in whitelist : ${className}")
+                    Log.info("return true : class is in whitelist : ${className}")
                     return true
                 }
             }
+
+            Log.info("return false : other - ${className}")
             return false
         }
 
@@ -323,14 +345,4 @@ class DsTransform extends Transform {
         return false
     }
 
-    /**
-     * check whether inject automatically
-     * @return
-     */
-    /*private boolean isAutoInject() {
-        if (isAutoInject && !targetPackages.isEmpty()) {
-            return true
-        }
-        return false
-    }*/
 }

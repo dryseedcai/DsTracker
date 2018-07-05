@@ -41,7 +41,7 @@ final class NotificationService implements TimeCostInterceptor {
                 timeCostInfo.getTimeCost(),
                 timeCostInfo.getExceedMilliTime()
         );
-        String contentText = context.getString(R.string.time_cost_canary_notification_message);
+        String contentText = timeCostInfo.getName();//context.getString(R.string.time_cost_canary_notification_message);
         show(context, contentTitle, contentText, pendingIntent);
     }
 
