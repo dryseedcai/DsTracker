@@ -116,6 +116,7 @@ class DsTransform extends Transform {
         Log.info("===> config -> autoInject : ${isAutoInject}")
 
         // black list
+        blackPackageList = project.timeCostConfig.blackPackageList
         blackPackageList.add(Constants.TIME_COST_PACKAGE_NAME)
 
         // 3rd party JAR packages that want our plugin to inject.

@@ -2,7 +2,7 @@
 * 耗时所在线程的过滤机制 Completed
 * 提供代码插桩阶段的白名单功能 Completed
 * 提供无注解自动插桩 Completed
-* Release No Operation
+* Release No Operation Completed
 * 合入主站APP
 * 超时UI界面
 * Notification开关
@@ -26,14 +26,15 @@
     );
     ```
 
-* 提供代码插桩阶段的白名单功能
+* 代码插桩阶段的白名单/黑名单功能
     ```
     timeCostConfig {
         whitePackageList = ['com.dryseed.timecost']
+        blackPackageList = []
     }
     ```
 
-* 提供无注解自动插桩
+* 无注解自动插桩
     ```
     timeCostConfig {
         autoInject = true

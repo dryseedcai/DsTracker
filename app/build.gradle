@@ -61,6 +61,8 @@ timeCostConfig {
     watchTaskTimeCost = true
     // the plugin will only inject package / class defined in whitePackageList
     whitePackageList = ['com.dryseed.testtimecost', 'com.dryseed.testwhitelist']
+    // thp plugin will not inject package, white list has a higher priority than white list
+    blackPackageList = []
     // the plugin will inject automatically based on whitePackageList
     autoInject = true
 }
