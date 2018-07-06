@@ -1,4 +1,5 @@
 apply plugin: 'groovy'
+apply plugin: 'maven'
 
 dependencies {
     //gradle sdk
@@ -14,6 +15,24 @@ dependencies {
 repositories {
     jcenter()
     mavenCentral()
+}
+
+//group和version
+group='com.dryseed.timecost.gradle'
+version='1.0.0'
+
+//打包到本地或者远程Maven库
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            //提交到远程服务器：
+            // repository(url: "http://www.xxx.com/repos") {
+            //    authentication(userName: "admin", password: "admin")
+            // }
+            //本地的Maven地址设置为E:/Maven
+            repository(url: uri('E:/repo'))
+        }
+    }
 }
 
 tasks.withType(JavaCompile) {
