@@ -1,5 +1,7 @@
 package com.dryseed.timecost;
 
+import com.dryseed.timecost.constants.TimeCostConstant;
+
 /**
  * @author caiminming
  */
@@ -12,6 +14,16 @@ public class TimeCostConfig {
     private boolean mMonitorAllThread;
 
     private boolean mMonitorOnlyMainThread;
+
+    private String mLogPath;
+
+    public String getLogPath() {
+        return mLogPath == null ? "" : mLogPath;
+    }
+
+    public void setLogPath(String logPath) {
+        mLogPath = logPath;
+    }
 
     public void setMilliExceedTime(long milliExceedTime) {
         mMilliExceedTime = milliExceedTime;
@@ -44,6 +56,8 @@ public class TimeCostConfig {
 
         private boolean mMonitorOnlyMainThread = false;
 
+        private String mLogPath = TimeCostConstant.TIME_COST_DEFAULT_LOG_DIR;
+
         public Builder setMilliExceedTime(long milliExceedTime) {
             this.milliExceedTime = milliExceedTime;
             return this;
@@ -65,6 +79,11 @@ public class TimeCostConfig {
             return this;
         }
 
+        public Builder setLogPath(String logPath) {
+            this.mLogPath = logPath;
+            return this;
+        }
+
         public TimeCostConfig build() {
             final TimeCostConfig config = create();
             return config;
@@ -75,6 +94,7 @@ public class TimeCostConfig {
             config.mMilliExceedTime = this.milliExceedTime;
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
+            config.mLogPath = this.mLogPath;
             return config;
         }
     }

@@ -10,7 +10,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.util.Log;
 
-import com.dryseed.timecost.ui.TimeCostDetailActivity;
+import com.dryseed.timecost.entity.TimeCostInfo;
+import com.dryseed.timecost.ui.TimeCostInfoListActivity;
 import com.dryseed.timecostimpl.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,7 +33,7 @@ final class NotificationService implements TimeCostInterceptor {
     @Override
     public void onExceed(Context context, TimeCostInfo timeCostInfo) {
         Log.d(TAG, "onExceed : " + timeCostInfo);
-        Intent intent = new Intent(context, TimeCostDetailActivity.class);
+        Intent intent = new Intent(context, TimeCostInfoListActivity.class);
         //intent.putExtra("show_latest", blockInfo.timeStart);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent, FLAG_UPDATE_CURRENT);

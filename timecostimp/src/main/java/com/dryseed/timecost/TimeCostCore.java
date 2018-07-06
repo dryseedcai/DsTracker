@@ -2,6 +2,9 @@ package com.dryseed.timecost;
 
 import android.util.Log;
 
+import com.dryseed.timecost.entity.TimeCostInfo;
+import com.dryseed.timecost.utils.CanaryLogUtils;
+import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
 import java.util.LinkedList;
@@ -106,7 +109,7 @@ public class TimeCostCore {
      *
      * @param timeCostInfo
      */
-    private void handleCost(TimeCostInfo timeCostInfo) {
+    private void handleCost(final TimeCostInfo timeCostInfo) {
         if (null == timeCostInfo) {
             return;
         }
@@ -120,11 +123,18 @@ public class TimeCostCore {
             );
 
             if (!mInterceptorChain.isEmpty()) {
-                for (TimeCostInterceptor interceptor : mInterceptorChain) {
+                for (final TimeCostInterceptor interceptor : mInterceptorChain) {
                     if (null == TimeCostContext.getContext()) {
                         return;
                     }
-                    interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
+                    HandlerThreadUtils.getWriteLogThreadHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            CanaryLogUtils.save(timeCostInfo.formatInfo());
+                            interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
+                        }
+                    });
+
                 }
             }
 

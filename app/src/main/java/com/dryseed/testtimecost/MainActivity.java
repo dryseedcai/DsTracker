@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.dryseed.timecost.annotations.TimeCost;
+import com.example.testaar.TestAar;
 import com.example.testlibrary.TestLibrary;
 
 public class MainActivity extends AppCompatActivity {
@@ -57,5 +58,9 @@ public class MainActivity extends AppCompatActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void myMethod5() {
+        new TestAar().testAarMethod();
     }
 }

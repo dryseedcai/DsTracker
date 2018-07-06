@@ -1,9 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.dryseed.timecostimpl">
 
+    <!-- To store the time-cost info. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application>
         <activity
-            android:name="com.dryseed.timecost.ui.TimeCostDetailActivity"
+            android:name="com.dryseed.timecost.ui.TimeCostInfoListActivity"
             android:enabled="false"
             android:icon="@drawable/time_cost_canary_icon"
             android:label="@string/time_cost_canary_detail_activity_label"

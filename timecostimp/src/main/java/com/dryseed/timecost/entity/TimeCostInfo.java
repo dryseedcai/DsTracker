@@ -1,50 +1,64 @@
-package com.dryseed.timecost;
+package com.dryseed.timecost.entity;
+
+import com.dryseed.timecost.TimeCostCanary;
 
 /**
  * @author caiminming
  */
 public class TimeCostInfo {
+    public static final String SEPARATOR = "\r\n";
+    protected static final String EQUALS = "=";
+    protected static final String KEY_NAME = "MethodName";
+    protected static final String KEY_START_TIME = "StartMilliTime";
+    protected static final String KEY_END_TIME = "EndMilliTime";
+    protected static final String KEY_EXCEED_TIME = "ExceedMilliTime";
+    protected static final String KEY_TIME_COST = "TimeCost";
+
+
     /**
      * Method Name
      */
-    private String name;
+    protected String mMethodName;
 
     /**
      * Start Time
      */
-    private long mStartMilliTime;
+    protected long mStartMilliTime;
 
     /**
      * End Time
      */
-    private long mEndMilliTime;
+    protected long mEndMilliTime;
 
     /**
      * Exceed Time
      */
-    private long mExceedMilliTime = 0;
+    protected long mExceedMilliTime = 0;
 
     /**
      * Cost Time
      */
-    private long mTimeCost;
+    protected long mTimeCost;
+
+    public TimeCostInfo() {
+    }
 
     public TimeCostInfo(String name, long curMilliTime) {
         this(name, curMilliTime, TimeCostCanary.get().getConfig().getMilliExceedTime());
     }
 
     public TimeCostInfo(String name, long curMilliTime, long excceedMilliTime) {
-        this.name = name;
+        this.mMethodName = name;
         this.mStartMilliTime = curMilliTime;
         this.mExceedMilliTime = excceedMilliTime <= 0 ? TimeCostCanary.get().getConfig().getMilliExceedTime() : excceedMilliTime;
     }
 
     public String getName() {
-        return name == null ? "" : name;
+        return mMethodName == null ? "" : mMethodName;
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.mMethodName = name;
     }
 
     public static TimeCostInfo parse(String name, long curMilliTime) {
@@ -88,10 +102,20 @@ public class TimeCostInfo {
         mTimeCost = timeCost;
     }
 
+    public String formatInfo() {
+        StringBuffer sb = new StringBuffer();
+        sb.append(KEY_NAME).append(EQUALS).append(mMethodName).append(SEPARATOR);
+        sb.append(KEY_START_TIME).append(EQUALS).append(mStartMilliTime).append(SEPARATOR);
+        sb.append(KEY_END_TIME).append(EQUALS).append(mEndMilliTime).append(SEPARATOR);
+        sb.append(KEY_EXCEED_TIME).append(EQUALS).append(mExceedMilliTime).append(SEPARATOR);
+        sb.append(KEY_TIME_COST).append(EQUALS).append(mTimeCost).append(SEPARATOR);
+        return sb.toString();
+    }
+
     @Override
     public String toString() {
         return "TimeCostInfo{" +
-                "name='" + name + '\'' +
+                "name='" + mMethodName + '\'' +
                 ", mStartMilliTime=" + mStartMilliTime +
                 ", mEndMilliTime=" + mEndMilliTime +
                 ", mExceedMilliTime=" + mExceedMilliTime +

@@ -107,7 +107,7 @@ class DsTransform extends Transform {
                    Collection<TransformInput> referencedInputs,
                    TransformOutputProvider outputProvider,
                    boolean isIncremental) throws IOException, TransformException, InterruptedException {
-        Log.info(String.format("----------------%s %s--------------", getName(), " transform start"))
+        Log.info(String.format("---------------- %s transform start [%s] --------------", getName(), project.name))
 
         android = project.extensions.getByType(AppExtension)
 

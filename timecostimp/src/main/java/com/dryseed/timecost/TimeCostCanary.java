@@ -1,12 +1,18 @@
 package com.dryseed.timecost;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 
-import com.dryseed.timecost.ui.TimeCostDetailActivity;
+import com.dryseed.timecost.ui.TimeCostInfoListActivity;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
 
 /**
  * @author caiminming
@@ -29,6 +35,9 @@ public class TimeCostCanary {
      */
     private static Context sApplicationContext;
 
+    /**
+     * Prevent uninitialized calls
+     */
     private static boolean sHasInstalled = false;
 
     /**
@@ -51,7 +60,7 @@ public class TimeCostCanary {
     public static TimeCostCanary install(Context applicationContext) {
         sHasInstalled = true;
         sApplicationContext = applicationContext;
-        setEnabled(applicationContext, TimeCostDetailActivity.class, true);
+        setEnabled(applicationContext, TimeCostInfoListActivity.class, true);
         if (sInstance != null) {
             sInstance = new TimeCostCanary();
         }
@@ -158,11 +167,11 @@ public class TimeCostCanary {
     private static void setEnabledBlocking(Context appContext,
                                            Class<?> componentClass,
                                            boolean enabled) {
-        /*ComponentName component = new ComponentName(appContext, componentClass);
+        ComponentName component = new ComponentName(appContext, componentClass);
         PackageManager packageManager = appContext.getPackageManager();
         int newState = enabled ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED;
         // Blocks on IPC.
-        packageManager.setComponentEnabledSetting(component, newState, DONT_KILL_APP);*/
+        packageManager.setComponentEnabledSetting(component, newState, DONT_KILL_APP);
     }
 
     private static void executeOnFileIoThread(Runnable runnable) {
