@@ -60,7 +60,7 @@ public class TimeCostCanary {
     public static TimeCostCanary install(Context applicationContext) {
         sHasInstalled = true;
         sApplicationContext = applicationContext;
-        setEnabled(applicationContext, TimeCostInfoListActivity.class, true);
+        setShowDetailUIEnable(applicationContext, TimeCostInfoListActivity.class, true);
         if (sInstance != null) {
             sInstance = new TimeCostCanary();
         }
@@ -74,6 +74,7 @@ public class TimeCostCanary {
         TimeCostContext.init(sApplicationContext);
         mTimeCostConfig = new TimeCostConfig.Builder().build();
         mTimeCostCore = TimeCostCore.getInstance();
+        mTimeCostCore.clearInterceptor();
         mTimeCostCore.addInterceptor(new NotificationService());
     }
 
@@ -110,6 +111,9 @@ public class TimeCostCanary {
      * @return
      */
     public TimeCostCanary config(TimeCostConfig timeCostConfig) {
+        if (timeCostConfig.isShowDetailUI() != mTimeCostConfig.isShowDetailUI()) {
+            setShowDetailUIEnable(sApplicationContext, TimeCostInfoListActivity.class, timeCostConfig.isShowDetailUI());
+        }
         mTimeCostConfig = timeCostConfig;
         return this;
     }
@@ -140,8 +144,9 @@ public class TimeCostCanary {
      * @param exceededTime
      */
     public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
-        Log.d(TAG, String.format("setStartTime2 : %s", methodName));
+        Log.d(TAG, String.format("setStartTime : %s", methodName));
         if (!sHasInstalled || !mIsRunning) {
+            Log.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         mTimeCostCore.setStartTime(methodName, curTime, exceededTime, monitorOnlyMainThread);
@@ -156,6 +161,7 @@ public class TimeCostCanary {
     public void setEndTime(String methodName, long time) {
         Log.d(TAG, String.format("setEndTime : %s", methodName));
         if (!sHasInstalled || !mIsRunning) {
+            Log.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         mTimeCostCore.setEndTime(methodName, time);
@@ -164,9 +170,9 @@ public class TimeCostCanary {
     // these lines are originally copied from LeakCanary: Copyright (C) 2015 Square, Inc.
     private static final Executor fileIoExecutor = newSingleThreadExecutor("File-IO");
 
-    private static void setEnabledBlocking(Context appContext,
-                                           Class<?> componentClass,
-                                           boolean enabled) {
+    private static void setShowDetailUIEnableInner(Context appContext,
+                                                   Class<?> componentClass,
+                                                   boolean enabled) {
         ComponentName component = new ComponentName(appContext, componentClass);
         PackageManager packageManager = appContext.getPackageManager();
         int newState = enabled ? COMPONENT_ENABLED_STATE_ENABLED : COMPONENT_ENABLED_STATE_DISABLED;
@@ -182,14 +188,14 @@ public class TimeCostCanary {
         return Executors.newSingleThreadExecutor(new SingleThreadFactory(threadName));
     }
 
-    private static void setEnabled(Context context,
-                                   final Class<?> componentClass,
-                                   final boolean enabled) {
+    private static void setShowDetailUIEnable(Context context,
+                                              final Class<?> componentClass,
+                                              final boolean enabled) {
         final Context appContext = context.getApplicationContext();
         executeOnFileIoThread(new Runnable() {
             @Override
             public void run() {
-                setEnabledBlocking(appContext, componentClass, enabled);
+                setShowDetailUIEnableInner(appContext, componentClass, enabled);
             }
         });
     }

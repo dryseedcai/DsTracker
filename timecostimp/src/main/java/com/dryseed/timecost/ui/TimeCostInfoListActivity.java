@@ -1,13 +1,19 @@
 package com.dryseed.timecost.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
+import com.dryseed.timecost.TimeCostCanary;
+import com.dryseed.timecost.TimeCostConfig;
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.entity.TimeCostLogInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
@@ -21,7 +27,6 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-
 /**
  * @author caiminming
  */
@@ -30,6 +35,7 @@ public class TimeCostInfoListActivity extends Activity {
 
     private RecyclerView mRecyclerView;
     private TimeCostInfoListAdapter mRecyclerViewAdapter;
+    private View mDelBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +53,31 @@ public class TimeCostInfoListActivity extends Activity {
         mRecyclerView.setLayoutManager(linearLayoutManager);
         mRecyclerViewAdapter = new TimeCostInfoListAdapter(this);
         mRecyclerView.setAdapter(mRecyclerViewAdapter);
+
+        mDelBtn = findViewById(R.id.del_btn);
+        mDelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogInterface.OnClickListener okListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        CanaryLogUtils.deleteAll();
+                        if (null != mRecyclerViewAdapter) {
+                            List<TimeCostLogInfo> list = Collections.emptyList();
+                            mRecyclerViewAdapter.setData(list);
+                        }
+                    }
+                };
+                new AlertDialog.Builder(TimeCostInfoListActivity.this)
+                        .setTitle(getString(R.string.time_cost_canary_delete))
+                        .setMessage(getString(R.string.time_cost_canary_delete_all_dialog_content))
+                        .setPositiveButton(getString(R.string.time_cost_canary_yes), okListener)
+                        .setNegativeButton(getString(R.string.time_cost_canary_no), null)
+                        .show();
+            }
+        });
+
+        ((TextView)findViewById(R.id.title)).setText(getString(R.string.time_cost_canary_block_list_title, getPackageName()));
     }
 
     @Override
@@ -106,7 +137,14 @@ public class TimeCostInfoListActivity extends Activity {
                 Collections.sort(timeCostLogInfoList, new Comparator<TimeCostInfo>() {
                     @Override
                     public int compare(TimeCostInfo lhs, TimeCostInfo rhs) {
-                        return Long.valueOf(rhs.getTimeCost()).compareTo(lhs.getTimeCost());
+                        int sortType = TimeCostCanary.get().getConfig().getSortType();
+                        if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_START_TIME) {
+                            return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());
+                        } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_TIME_COST) {
+                            return Long.valueOf(rhs.getTimeCost()).compareTo(lhs.getTimeCost());
+                        } else {
+                            return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());
+                        }
                     }
                 });
             }

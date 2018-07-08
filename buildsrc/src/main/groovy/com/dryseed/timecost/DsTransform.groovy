@@ -37,6 +37,7 @@ class DsTransform extends Transform {
     private static Project project
     private static HashSet<String> whitePackageList = []
     private static boolean isAutoInject = false
+    private static boolean isJarInject = false
     private static HashSet<String> blackPackageList = []
 
     DsTransform(Project project) {
@@ -115,6 +116,10 @@ class DsTransform extends Transform {
         isAutoInject = project.timeCostConfig.autoInject
         Log.info("===> config -> autoInject : ${isAutoInject}")
 
+        // jar inject
+        isJarInject = project.timeCostConfig.jarInject
+        Log.info("===> config -> jarInject : ${isJarInject}")
+
         // black list
         blackPackageList = project.timeCostConfig.blackPackageList
         blackPackageList.add(Constants.TIME_COST_PACKAGE_NAME)
@@ -184,17 +189,19 @@ class DsTransform extends Transform {
                 def jarInputName = jarInput.name
                 def jarFilePath = jarInput.file.getAbsolutePath()
                 def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
-                Log.info(String.format("jarInput.name : %s | jarFileName : %s | jarPath : %s",
-                        jarInputName,
-                        jarInput.file.name,
-                        jarFilePath
-                ))
+
                 if (jarInputName.endsWith(".jar")) {
                     jarInputName = jarInputName.substring(0, jarInputName.length() - 4)
                 }
 
                 File tmpFile = null
-                if (jarInput.file.getAbsolutePath().endsWith(".jar")) {
+                if (isJarInject && jarInput.file.getAbsolutePath().endsWith(".jar")) {
+                    Log.info(String.format("jarInput.name : %s | jarFileName : %s | jarPath : %s",
+                            jarInputName,
+                            jarInput.file.name,
+                            jarFilePath
+                    ))
+
                     JarFile jarFile = new JarFile(jarInput.file)
                     Enumeration enumeration = jarFile.entries()
                     //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
@@ -338,7 +345,7 @@ class DsTransform extends Transform {
                 }
             }
 
-            Log.info("return false : other - ${className}")
+            //Log.info("return false : other - ${className}")
             return false
         }
 

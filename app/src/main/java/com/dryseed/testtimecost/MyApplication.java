@@ -16,6 +16,8 @@ public class MyApplication extends Application {
                 new TimeCostConfig.Builder()
                         .setMilliExceedTime(200L)
                         .setMonitorOnlyMainThread(true)
+                        .setSortType(TimeCostConfig.CONFIG_SORT_TYPE_START_TIME)
+                        .setShowDetailUI(true)
                         .build()
         );
 

@@ -154,6 +154,17 @@ public class TimeCostCore {
      * @param timeCostInterceptor
      */
     public void addInterceptor(TimeCostInterceptor timeCostInterceptor) {
-        mInterceptorChain.add(timeCostInterceptor);
+        if (null != mInterceptorChain) {
+            mInterceptorChain.add(timeCostInterceptor);
+        }
+    }
+
+    /**
+     * Clear Interceptor
+     */
+    public void clearInterceptor() {
+        if (null != mInterceptorChain) {
+            mInterceptorChain.clear();
+        }
     }
 }

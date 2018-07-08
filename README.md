@@ -4,10 +4,13 @@
 * 提供无注解自动插桩 Completed
 * Release No Operation Completed
 * 超时UI界面 Completed
-* 耗时性能排序
-* 合入主站APP
-* Notification开关
+* 耗时性能排序 Completed
+* Notification开关 Completed
+* 注入jar包开关 Completed
+* 上传maven Completed
 * 统计时间设定
+* json导入插桩配置
+
 
 
 ## HELP
@@ -47,12 +50,30 @@
     releaseCompile project(':timecostimp-no-op')
     ```
 
+* 耗时性能排序
+    ```
+    TimeCostCanary.install(this).config(
+            new TimeCostConfig.Builder()
+                    .setSortType(TimeCostConfig.CONFIG_SORT_TYPE_START_TIME)
+                    .build()
+    );
+    ```
 
+* Notification开关
+    ```
+    TimeCostCanary.install(this).config(
+            new TimeCostConfig.Builder()
+                    .setShowDetailUI(true)
+                    .build()
+    );
+    ```
 
-
-
-
-
+* 注入jar包开关
+    ```
+    timeCostConfig {
+        jarInject = false
+    }
+    ```
 
 
 

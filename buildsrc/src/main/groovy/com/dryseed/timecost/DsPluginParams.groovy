@@ -9,4 +9,6 @@ class DsPluginParams {
     HashSet<String> whitePackageList = []
     HashSet<String> blackPackageList = []
     boolean autoInject = false
+    boolean jarInject = false
+
 }

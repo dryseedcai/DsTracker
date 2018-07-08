@@ -1,3 +1,5 @@
+package com.dryseed.timecost
+
 import org.gradle.BuildListener
 import org.gradle.BuildResult
 import org.gradle.api.Task
@@ -5,7 +7,6 @@ import org.gradle.api.execution.TaskExecutionListener
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.TaskState
-import org.gradle.util.Clock
 
 /**
  * @author caiminming
@@ -48,12 +49,25 @@ class TaskTimeCostListener implements TaskExecutionListener, BuildListener {
 
     @Override
     void beforeExecute(Task task) {
-        clock = new Clock()
+        clock = new Clock(new Date().getTime())
     }
 
     @Override
     void afterExecute(Task task, TaskState taskState) {
-        def ms = clock.timeInMs
+        def ms = clock.getTimeInMs()
         times.add([ms, task.path])
+    }
+
+}
+
+class Clock {
+    long startTimeInMs
+
+    Clock(long startTimeInMs) {
+        this.startTimeInMs = startTimeInMs
+    }
+
+    long getTimeInMs() {
+        return System.currentTimeMillis() - startTimeInMs
     }
 }

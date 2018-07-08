@@ -6,6 +6,9 @@ import com.dryseed.timecost.constants.TimeCostConstant;
  * @author caiminming
  */
 public class TimeCostConfig {
+    public static final int CONFIG_SORT_TYPE_START_TIME = 1;
+    public static final int CONFIG_SORT_TYPE_TIME_COST = 2;
+
     private TimeCostConfig() {
     }
 
@@ -15,7 +18,27 @@ public class TimeCostConfig {
 
     private boolean mMonitorOnlyMainThread;
 
+    private boolean mShowDetailUI;
+
     private String mLogPath;
+
+    private int mSortType;
+
+    public int getSortType() {
+        return mSortType;
+    }
+
+    public void setSortType(int sortType) {
+        mSortType = sortType;
+    }
+
+    public boolean isShowDetailUI() {
+        return mShowDetailUI;
+    }
+
+    public void setShowDetailUI(boolean showDetailUI) {
+        mShowDetailUI = showDetailUI;
+    }
 
     public String getLogPath() {
         return mLogPath == null ? "" : mLogPath;
@@ -56,7 +79,21 @@ public class TimeCostConfig {
 
         private boolean mMonitorOnlyMainThread = false;
 
+        private boolean mShowDetailUI = true;
+
+        private int mSortType = CONFIG_SORT_TYPE_START_TIME;
+
         private String mLogPath = TimeCostConstant.TIME_COST_DEFAULT_LOG_DIR;
+
+        public Builder setSortType(int sortType) {
+            mSortType = sortType;
+            return this;
+        }
+
+        public Builder setShowDetailUI(boolean showDetailUI) {
+            mShowDetailUI = showDetailUI;
+            return this;
+        }
 
         public Builder setMilliExceedTime(long milliExceedTime) {
             this.milliExceedTime = milliExceedTime;
@@ -94,7 +131,9 @@ public class TimeCostConfig {
             config.mMilliExceedTime = this.milliExceedTime;
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
+            config.mShowDetailUI = this.mShowDetailUI;
             config.mLogPath = this.mLogPath;
+            config.mSortType = this.mSortType;
             return config;
         }
     }
