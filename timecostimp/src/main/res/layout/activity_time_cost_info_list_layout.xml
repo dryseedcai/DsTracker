@@ -11,8 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:gravity="center"
-        android:textSize="20sp"
         android:textColor="#cccccc"
+        android:textSize="20sp"
         tool:text="Blocks in %s" />
 
     <android.support.v7.widget.RecyclerView
@@ -21,11 +21,26 @@
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <Button
-        android:id="@+id/del_btn"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="DELETE ALL"
-        android:visibility="visible" />
+        android:layout_height="48dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/del_btn"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="DELETE ALL"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/sort_btn"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="SORT"
+            android:textSize="13sp" />
+    </LinearLayout>
 
 </LinearLayout>

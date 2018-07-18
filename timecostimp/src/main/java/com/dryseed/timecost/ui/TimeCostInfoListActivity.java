@@ -10,6 +10,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.dryseed.timecost.TimeCostCanary;
@@ -17,6 +18,7 @@ import com.dryseed.timecost.TimeCostConfig;
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.entity.TimeCostLogInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
+import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecostimpl.R;
 
 import java.io.File;
@@ -35,7 +37,9 @@ public class TimeCostInfoListActivity extends Activity {
 
     private RecyclerView mRecyclerView;
     private TimeCostInfoListAdapter mRecyclerViewAdapter;
-    private View mDelBtn;
+    private Button mDelBtn;
+    private Button mSortBtn;
+    private int mSortTypeIndex = TimeCostCanary.get().getConfig().getSortType();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +81,24 @@ public class TimeCostInfoListActivity extends Activity {
             }
         });
 
-        ((TextView)findViewById(R.id.title)).setText(getString(R.string.time_cost_canary_block_list_title, getPackageName()));
+        mSortBtn = findViewById(R.id.sort_btn);
+        mSortBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int sortType = (++mSortTypeIndex) % 3;
+                if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_START_TIME) {
+                    mSortBtn.setText("SORT_START_TIME");
+                } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_TIME_COST) {
+                    mSortBtn.setText("SORT_TIME_COST");
+                } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
+                    mSortBtn.setText("SORT_THREAD_TIME_COST");
+                }
+                TimeCostCanary.get().getConfig().setSortType(sortType);
+                LoadBlocks.load(TimeCostInfoListActivity.this);
+            }
+        });
+
+        ((TextView) findViewById(R.id.title)).setText(getString(R.string.time_cost_canary_block_list_title, getPackageName()));
     }
 
     @Override
@@ -131,7 +152,7 @@ public class TimeCostInfoListActivity extends Activity {
                     } catch (Exception e) {
                         // Probably blockFile corrupts or format changes, just delete it.
                         file.delete();
-                        Log.e(TAG, "Could not read block log file, deleted :" + file, e);
+                        DebugLog.e(TAG, "Could not read block log file, deleted :" + file);
                     }
                 }
                 Collections.sort(timeCostLogInfoList, new Comparator<TimeCostInfo>() {
@@ -142,6 +163,8 @@ public class TimeCostInfoListActivity extends Activity {
                             return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());
                         } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_TIME_COST) {
                             return Long.valueOf(rhs.getTimeCost()).compareTo(lhs.getTimeCost());
+                        } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
+                            return Long.valueOf(rhs.getThreadTimeCost()).compareTo(lhs.getThreadTimeCost());
                         } else {
                             return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());
                         }
@@ -154,7 +177,7 @@ public class TimeCostInfoListActivity extends Activity {
                     inFlight.remove(LoadBlocks.this);
                     if (activityOrNull != null) {
                         activityOrNull.mRecyclerViewAdapter.setData(timeCostLogInfoList);
-                        Log.d(TAG, "load block entries: " + timeCostLogInfoList.size());
+                        DebugLog.d(TAG, "load block entries: " + timeCostLogInfoList.size());
                     }
                 }
             });

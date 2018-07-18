@@ -89,7 +89,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
             protected void onMethodEnter() {
                 //Log.info("AdviceAdapter onMethodEnter");
                 //统计方法耗时
-                if (mIsAutoInject || (mIsInject && mAnnotationHashMap != null)) {
+                if (mIsAutoInject || mIsInject) {
                     if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_NAME)) {
                         mMethodName = (String) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_NAME);
                     } else {
@@ -98,14 +98,10 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
                     long exceededTime = 0;
                     boolean monitorOnlyMainThread = false;
-                    if (mAnnotationHashMap.isEmpty()) {
-                        //generateStartCodeWithNoParam(mv, mMethodName);
-                    } else if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MILLITIME)) {
+                    if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MILLITIME)) {
                         exceededTime = (long) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MILLITIME);
-                        //generateStartCodeWithExceededTimeParam(mv, mMethodName, (long) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MILLITIME));
                     } else if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD)) {
                         monitorOnlyMainThread = (boolean) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD);
-                        //generateStartCodeWithNoParam(mv, mMethodName);
                     }
                     generateStartCode(mv, mMethodName, exceededTime, monitorOnlyMainThread);
                     Log.info(String.format("generate code : %s", mMethodName));
@@ -136,6 +132,14 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         return methodVisitor;
     }
 
+    /**
+     * setStartTime(String methodName, long exceededTime, boolean monitorOnlyMainThread)
+     *
+     * @param mv
+     * @param name
+     * @param exceededTime
+     * @param monitorOnlyMainThread
+     */
     private void generateStartCode(MethodVisitor mv, String name, long exceededTime, boolean monitorOnlyMainThread) {
         mv.visitMethodInsn(
                 INVOKESTATIC,
@@ -145,24 +149,23 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 false
         );
         mv.visitLdcInsn(name);
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "java/lang/System",
-                "currentTimeMillis",
-                "()J",
-                false
-        );
         mv.visitLdcInsn(new Long(exceededTime));
         mv.visitInsn(monitorOnlyMainThread ? ICONST_1 : ICONST_0);
         mv.visitMethodInsn(
                 INVOKEVIRTUAL,
                 "com/dryseed/timecost/TimeCostCanary",
                 "setStartTime",
-                "(Ljava/lang/String;JJZ)V",
+                "(Ljava/lang/String;JZ)V",
                 false
         );
     }
 
+    /**
+     * setEndTime(String methodName)
+     *
+     * @param mv
+     * @param name
+     */
     private void generateEndCodeWithNoParam(MethodVisitor mv, String name) {
         mv.visitMethodInsn(
                 INVOKESTATIC,
@@ -173,71 +176,13 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         );
         mv.visitLdcInsn(name);
         mv.visitMethodInsn(
-                INVOKESTATIC,
-                "java/lang/System",
-                "currentTimeMillis",
-                "()J",
-                false
-        );
-        mv.visitMethodInsn(
                 INVOKEVIRTUAL,
                 "com/dryseed/timecost/TimeCostCanary",
                 "setEndTime",
-                "(Ljava/lang/String;J)V",
+                "(Ljava/lang/String;)V",
                 false
         );
     }
-
-    /*private void generateStartCodeWithNoParam(MethodVisitor mv, String name) {
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "com/dryseed/timecost/TimeCostCanary",
-                "get",
-                "()Lcom/dryseed/timecost/TimeCostCanary;",
-                false
-        );
-        mv.visitLdcInsn(name);
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "java/lang/System",
-                "currentTimeMillis",
-                "()J",
-                false
-        );
-        mv.visitMethodInsn(
-                INVOKEVIRTUAL,
-                "com/dryseed/timecost/TimeCostCanary",
-                "setStartTime",
-                "(Ljava/lang/String;J)V",
-                false
-        );
-    }
-
-    private void generateStartCodeWithExceededTimeParam(MethodVisitor mv, String name, long exceededTime) {
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "com/dryseed/timecost/TimeCostCanary",
-                "get",
-                "()Lcom/dryseed/timecost/TimeCostCanary;",
-                false
-        );
-        mv.visitLdcInsn(name);
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "java/lang/System",
-                "currentTimeMillis",
-                "()J",
-                false
-        );
-        mv.visitLdcInsn(new Long(exceededTime));
-        mv.visitMethodInsn(
-                INVOKEVIRTUAL,
-                "com/dryseed/timecost/TimeCostCanary",
-                "setStartTime",
-                "(Ljava/lang/String;JJ)V",
-                false
-        );
-    }*/
 
     class AnnotationMethodsArrayValueScanner extends AnnotationVisitor {
         AnnotationMethodsArrayValueScanner() {

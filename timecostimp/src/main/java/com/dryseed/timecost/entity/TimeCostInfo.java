@@ -13,7 +13,7 @@ public class TimeCostInfo {
     protected static final String KEY_END_TIME = "EndMilliTime";
     protected static final String KEY_EXCEED_TIME = "ExceedMilliTime";
     protected static final String KEY_TIME_COST = "TimeCost";
-
+    protected static final String KEY_THREAD_TIME_COST = "ThreadTimeCost";
 
     /**
      * Method Name
@@ -26,9 +26,19 @@ public class TimeCostInfo {
     protected long mStartMilliTime;
 
     /**
+     * Start Thread Time
+     */
+    protected long mStartThreadMilliTime;
+
+    /**
      * End Time
      */
     protected long mEndMilliTime;
+
+    /**
+     * End Thread Time
+     */
+    protected long mEndThreadMilliTime;
 
     /**
      * Exceed Time
@@ -40,16 +50,18 @@ public class TimeCostInfo {
      */
     protected long mTimeCost;
 
+    /**
+     * Thread Cost Time
+     */
+    protected long mThreadTimeCost;
+
     public TimeCostInfo() {
     }
 
-    public TimeCostInfo(String name, long curMilliTime) {
-        this(name, curMilliTime, TimeCostCanary.get().getConfig().getMilliExceedTime());
-    }
-
-    public TimeCostInfo(String name, long curMilliTime, long excceedMilliTime) {
+    public TimeCostInfo(String name, long curMilliTime, long curThreadMilliTime, long excceedMilliTime) {
         this.mMethodName = name;
         this.mStartMilliTime = curMilliTime;
+        this.mStartThreadMilliTime = curThreadMilliTime;
         this.mExceedMilliTime = excceedMilliTime <= 0 ? TimeCostCanary.get().getConfig().getMilliExceedTime() : excceedMilliTime;
     }
 
@@ -61,12 +73,12 @@ public class TimeCostInfo {
         this.mMethodName = name;
     }
 
-    public static TimeCostInfo parse(String name, long curMilliTime) {
-        return parse(name, curMilliTime, 0);
+    public static TimeCostInfo parse(String name, long curMilliTime, long curThreadMilliTime) {
+        return parse(name, curMilliTime, curThreadMilliTime, 0);
     }
 
-    public static TimeCostInfo parse(String name, long curMilliTime, long excceedMilliTime) {
-        return new TimeCostInfo(name, curMilliTime, excceedMilliTime);
+    public static TimeCostInfo parse(String name, long curMilliTime, long curThreadMilliTime, long excceedMilliTime) {
+        return new TimeCostInfo(name, curMilliTime, curThreadMilliTime, excceedMilliTime);
     }
 
     public long getStartMilliTime() {
@@ -75,6 +87,15 @@ public class TimeCostInfo {
 
     public void setStartMilliTime(long startMilliTime) {
         mStartMilliTime = startMilliTime;
+    }
+
+    public long getEndThreadMilliTime() {
+        return mEndThreadMilliTime;
+    }
+
+    public void setEndThreadMilliTime(long endThreadMilliTime) {
+        mEndThreadMilliTime = endThreadMilliTime;
+        mThreadTimeCost = mEndThreadMilliTime - mStartThreadMilliTime;
     }
 
     public long getEndMilliTime() {
@@ -94,12 +115,28 @@ public class TimeCostInfo {
         this.mExceedMilliTime = exceedMilliTime;
     }
 
+    public long getStartThreadMilliTime() {
+        return mStartThreadMilliTime;
+    }
+
+    public void setStartThreadMilliTime(long startThreadMilliTime) {
+        mStartThreadMilliTime = startThreadMilliTime;
+    }
+
     public long getTimeCost() {
         return mTimeCost;
     }
 
     public void setTimeCost(long timeCost) {
         mTimeCost = timeCost;
+    }
+
+    public long getThreadTimeCost() {
+        return mThreadTimeCost;
+    }
+
+    public void setThreadTimeCost(long threadTimeCost) {
+        mThreadTimeCost = threadTimeCost;
     }
 
     public String formatInfo() {
@@ -109,6 +146,7 @@ public class TimeCostInfo {
         sb.append(KEY_END_TIME).append(EQUALS).append(mEndMilliTime).append(SEPARATOR);
         sb.append(KEY_EXCEED_TIME).append(EQUALS).append(mExceedMilliTime).append(SEPARATOR);
         sb.append(KEY_TIME_COST).append(EQUALS).append(mTimeCost).append(SEPARATOR);
+        sb.append(KEY_THREAD_TIME_COST).append(EQUALS).append(mThreadTimeCost).append(SEPARATOR);
         return sb.toString();
     }
 

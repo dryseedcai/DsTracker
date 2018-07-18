@@ -14,7 +14,7 @@
         android:layout_gravity="center_vertical"
         android:layout_weight="1"
         android:textColor="#cccccc"
-        android:textSize="18sp"/>
+        android:textSize="12sp"/>
 
     <TextView
         android:id="@+id/time"

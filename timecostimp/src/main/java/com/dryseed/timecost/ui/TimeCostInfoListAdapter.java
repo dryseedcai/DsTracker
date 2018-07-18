@@ -43,7 +43,12 @@ public class TimeCostInfoListAdapter extends RecyclerView.Adapter<TimeCostInfoLi
     @Override
     public void onBindViewHolder(TimeCostInfoListHolder holder, int position) {
         TimeCostLogInfo timeCostInfo = mData.get(position);
-        holder.contentTV.setText(String.format("%s blocked %d ms", timeCostInfo.getName(), timeCostInfo.getTimeCost()));
+        holder.contentTV.setText(String.format(
+                "%s blocked \n cost %d ms | thread cost %d ms",
+                timeCostInfo.getName(),
+                timeCostInfo.getTimeCost(),
+                timeCostInfo.getThreadTimeCost()
+        ));
 
         String timeStr = DateUtils.formatDateTime(mActivityWeakReference.get(), timeCostInfo.getStartMilliTime(), FORMAT_SHOW_TIME | FORMAT_SHOW_DATE);
         holder.timeTV.setText(timeStr);

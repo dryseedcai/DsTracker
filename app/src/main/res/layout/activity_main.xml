@@ -39,4 +39,36 @@
         android:onClick="myMethod4"
         android:text="Work Thread" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod5"
+        android:text="AAR" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod6"
+        android:text="ThreadTime1" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod7"
+        android:text="ThreadTime2" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:onClick="myMethod8"
+        android:text="ThreadTime3" />
+
 </LinearLayout>

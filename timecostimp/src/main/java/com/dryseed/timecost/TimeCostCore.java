@@ -1,9 +1,8 @@
 package com.dryseed.timecost;
 
-import android.util.Log;
-
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
+import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
@@ -81,12 +80,12 @@ public class TimeCostCore {
      * @param curTime
      * @param exceededTime
      */
-    public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
+    public void setStartTime(String methodName, long curTime, long curThreadTime, long exceededTime, boolean monitorOnlyMainThread) {
         if (!checkThread(monitorOnlyMainThread)) {
-            Log.d(TAG, "thread is not valid !!!");
+            DebugLog.d(TAG, "thread is not valid !!!");
             return;
         }
-        mTimeCostInfoHashMap.put(methodName, TimeCostInfo.parse(methodName, curTime, exceededTime));
+        mTimeCostInfoHashMap.put(methodName, TimeCostInfo.parse(methodName, curTime, curThreadTime, exceededTime));
     }
 
     /**
@@ -95,12 +94,13 @@ public class TimeCostCore {
      * @param methodName
      * @param time
      */
-    public void setEndTime(String methodName, long time) {
+    public void setEndTime(String methodName, long time, long threadTime) {
         TimeCostInfo timeCostInfo = mTimeCostInfoHashMap.get(methodName);
         if (null == timeCostInfo) {
             return;
         }
         timeCostInfo.setEndMilliTime(time);
+        timeCostInfo.setEndThreadMilliTime(threadTime);
         handleCost(timeCostInfo);
     }
 
@@ -115,7 +115,7 @@ public class TimeCostCore {
         }
 
         if (timeCostInfo.isExceed()) {
-            Log.w(TAG, String.format(
+            DebugLog.w(TAG, String.format(
                     "%s has exceed time. TimeCost : %d | ExceededTime : %d",
                     timeCostInfo.getName(),
                     timeCostInfo.getTimeCost(),
@@ -139,7 +139,7 @@ public class TimeCostCore {
             }
 
         } else {
-            Log.d(TAG, String.format(
+            DebugLog.d(TAG, String.format(
                     "%s has not exceed time. TimeCost : %d | ExceededTime : %d",
                     timeCostInfo.getName(),
                     timeCostInfo.getTimeCost(),

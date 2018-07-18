@@ -3,9 +3,11 @@ package com.dryseed.timecost;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.dryseed.timecost.ui.TimeCostInfoListActivity;
+import com.dryseed.timecost.utils.DebugLog;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -140,31 +142,34 @@ public class TimeCostCanary {
      * Set StartTime , Called by Asm Code
      *
      * @param methodName
-     * @param curTime
      * @param exceededTime
+     * @param monitorOnlyMainThread
      */
-    public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
-        Log.d(TAG, String.format("setStartTime : %s", methodName));
+    public void setStartTime(String methodName, long exceededTime, boolean monitorOnlyMainThread) {
+        DebugLog.d(TAG, String.format("setStartTime : %s", methodName));
         if (!sHasInstalled || !mIsRunning) {
-            Log.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
+            DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
-        mTimeCostCore.setStartTime(methodName, curTime, exceededTime, monitorOnlyMainThread);
+        long curTime = System.currentTimeMillis();
+        long curThreadTime = SystemClock.currentThreadTimeMillis();
+        mTimeCostCore.setStartTime(methodName, curTime, curThreadTime, exceededTime, monitorOnlyMainThread);
     }
 
     /**
      * Set EndTime , Called by Asm Code
      *
      * @param methodName
-     * @param time
      */
-    public void setEndTime(String methodName, long time) {
-        Log.d(TAG, String.format("setEndTime : %s", methodName));
+    public void setEndTime(String methodName) {
+        DebugLog.d(TAG, String.format("setEndTime"));
         if (!sHasInstalled || !mIsRunning) {
-            Log.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
+            DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
-        mTimeCostCore.setEndTime(methodName, time);
+        long curTime = System.currentTimeMillis();
+        long curThreadTime = SystemClock.currentThreadTimeMillis();
+        mTimeCostCore.setEndTime(methodName, curTime, curThreadTime);
     }
 
     // these lines are originally copied from LeakCanary: Copyright (C) 2015 Square, Inc.

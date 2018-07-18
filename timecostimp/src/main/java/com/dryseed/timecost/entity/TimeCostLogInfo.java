@@ -31,6 +31,8 @@ public class TimeCostLogInfo extends TimeCostInfo {
                     timeCostLogInfo.mEndMilliTime = Long.valueOf(line.split(EQUALS)[1]);
                 } else if (line.startsWith(KEY_TIME_COST)) {
                     timeCostLogInfo.mTimeCost = Long.valueOf(line.split(EQUALS)[1]);
+                } else if (line.startsWith(KEY_THREAD_TIME_COST)) {
+                    timeCostLogInfo.mThreadTimeCost = Long.valueOf(line.split(EQUALS)[1]);
                 }
             }
             reader.close();

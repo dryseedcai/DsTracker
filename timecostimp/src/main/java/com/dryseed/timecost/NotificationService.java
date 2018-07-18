@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.ui.TimeCostInfoListActivity;
+import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecostimpl.R;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,7 +33,7 @@ final class NotificationService implements TimeCostInterceptor {
 
     @Override
     public void onExceed(Context context, TimeCostInfo timeCostInfo) {
-        Log.d(TAG, "onExceed : " + timeCostInfo);
+        DebugLog.d(TAG, "onExceed : " + timeCostInfo);
         Intent intent = new Intent(context, TimeCostInfoListActivity.class);
         //intent.putExtra("show_latest", blockInfo.timeStart);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -78,7 +79,7 @@ final class NotificationService implements TimeCostInterceptor {
                 deprecatedMethod.invoke(notification, context, contentTitle, contentText, pendingIntent);
             } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
                     | InvocationTargetException e) {
-                Log.w(TAG, "Method not found", e);
+                DebugLog.e(TAG, "Method not found", e);
             }
         } else {
             Notification.Builder builder = new Notification.Builder(context)

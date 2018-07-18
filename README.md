@@ -10,6 +10,7 @@
 * 上传maven Completed
 * 统计时间设定
 * json导入插桩配置
+* 生成可视化报告
 
 
 

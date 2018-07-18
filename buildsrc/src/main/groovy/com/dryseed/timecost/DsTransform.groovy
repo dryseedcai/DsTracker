@@ -120,6 +120,7 @@ class DsTransform extends Transform {
         isJarInject = project.timeCostConfig.jarInject
         Log.info("===> config -> jarInject : ${isJarInject}")
 
+        Log.info("test =============")
         // black list
         blackPackageList = project.timeCostConfig.blackPackageList
         blackPackageList.add(Constants.TIME_COST_PACKAGE_NAME)
@@ -148,26 +149,7 @@ class DsTransform extends Transform {
                         //遍历目录
                         directoryInput.file.eachFileRecurse {
                             File file ->
-                                def name = file.name
-                                // log : file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug\com\dryseed\timecost\MainActivity.class
-                                // log : file.name = MainActivity.class
-                                // log : directoryInput.file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug
-                                // Log.info("file.absolutePath = ${file.absolutePath}")
-                                // Log.info("file.name = ${file.name}")
-                                // Log.info("directoryInput.file.absolutePath = ${directoryInput.file.absolutePath}")
-                                if (shouldModifyFile(file, directoryInput.file)) {
-                                    Log.info("filePath = ${file.absolutePath}")
-                                    ClassReader classReader = new ClassReader(file.bytes)
-                                    ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-                                    def className = name.split(".class")[0]
-                                    ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
-                                    classReader.accept(cv, EXPAND_FRAMES)
-                                    byte[] code = classWriter.toByteArray()
-                                    FileOutputStream fos = new FileOutputStream(
-                                            file.parentFile.absolutePath + File.separator + name)
-                                    fos.write(code)
-                                    fos.close()
-                                }
+                                injectClass(file, directoryInput)
                         }
                     }
 
@@ -187,7 +169,6 @@ class DsTransform extends Transform {
             input.jarInputs.each { JarInput jarInput ->
                 // 重命名输出文件（同目录copyFile会冲突）
                 def jarInputName = jarInput.name
-                def jarFilePath = jarInput.file.getAbsolutePath()
                 def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
 
                 if (jarInputName.endsWith(".jar")) {
@@ -195,68 +176,8 @@ class DsTransform extends Transform {
                 }
 
                 File tmpFile = null
-                if (isJarInject && jarInput.file.getAbsolutePath().endsWith(".jar")) {
-                    Log.info(String.format("jarInput.name : %s | jarFileName : %s | jarPath : %s",
-                            jarInputName,
-                            jarInput.file.name,
-                            jarFilePath
-                    ))
 
-                    JarFile jarFile = new JarFile(jarInput.file)
-                    Enumeration enumeration = jarFile.entries()
-                    //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
-                    tmpFile = new File(jarInput.file.getParent() + File.separator + Constants.JAR_TMP_FILE_NAME)
-                    //避免上次的缓存被重复插入
-                    if (tmpFile.exists()) {
-                        tmpFile.delete()
-                    }
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
-                    //用于保存
-                    ArrayList<String> processorList = new ArrayList<>()
-                    while (enumeration.hasMoreElements()) {
-                        JarEntry jarEntry = (JarEntry) enumeration.nextElement()
-                        String entryName = jarEntry.getName()
-                        ZipEntry zipEntry = new ZipEntry(entryName)
-
-                        // log : entryName : com/dryseed/timecost/TimeCostCanary.class
-                        // Log.info(String.format("entryName : %s", entryName))
-
-                        InputStream inputStream = jarFile.getInputStream(jarEntry)
-
-                        // log : simpleEntryName : com.dryseed.timecost.TimeCostCanary
-                        String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
-
-                        //插桩class
-                        if (shouldModifyClass(entryName, simpleEntryName)) {
-                            //class文件处理
-                            Log.info("jar class : ${simpleEntryName}")
-                            jarOutputStream.putNextEntry(zipEntry)
-                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
-                            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-                            def className = entryName.split(".class")[0]
-                            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
-                            classReader.accept(cv, EXPAND_FRAMES)
-                            byte[] code = classWriter.toByteArray()
-                            jarOutputStream.write(code)
-                        } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
-                            if (!processorList.contains(entryName)) {
-                                processorList.add(entryName)
-                                jarOutputStream.putNextEntry(zipEntry)
-                                jarOutputStream.write(IOUtils.toByteArray(inputStream))
-                            } else {
-                                Log.info("duplicate entry : ${entryName}")
-                            }
-                        } else {
-                            jarOutputStream.putNextEntry(zipEntry)
-                            jarOutputStream.write(IOUtils.toByteArray(inputStream))
-                        }
-
-                        jarOutputStream.closeEntry()
-                    }
-
-                    jarOutputStream.close()
-                    jarFile.close()
-                }
+                injectJar(tmpFile, jarInput)
 
                 //生成输出路径
                 def dest = outputProvider.getContentLocation(
@@ -275,6 +196,90 @@ class DsTransform extends Transform {
             }
         }
         Log.info(String.format("----------------%s %s--------------", getName(), " transform end"))
+    }
+
+    private void injectClass(File file, DirectoryInput directoryInput) {
+        def name = file.name
+        // log : file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug\com\dryseed\timecost\MainActivity.class
+        // log : file.name = MainActivity.class
+        // log : directoryInput.file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug
+        // Log.info("file.absolutePath = ${file.absolutePath}")
+        // Log.info("file.name = ${file.name}")
+        // Log.info("directoryInput.file.absolutePath = ${directoryInput.file.absolutePath}")
+        if (shouldModifyFile(file, directoryInput.file)) {
+            Log.info("filePath = ${file.absolutePath}")
+            ClassReader classReader = new ClassReader(file.bytes)
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+            def className = name.split(".class")[0]
+            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
+            classReader.accept(cv, EXPAND_FRAMES)
+            byte[] code = classWriter.toByteArray()
+            FileOutputStream fos = new FileOutputStream(
+                    file.parentFile.absolutePath + File.separator + name)
+            fos.write(code)
+            fos.close()
+        }
+    }
+
+    private void injectJar(File tmpFile, JarInput jarInput) {
+        if (isJarInject && jarInput.file.getAbsolutePath().endsWith(".jar")) {
+            Log.info(String.format("jarInput.name : %s", jarInput.file.name))
+
+            JarFile jarFile = new JarFile(jarInput.file)
+            Enumeration enumeration = jarFile.entries()
+            //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
+            tmpFile = new File(jarInput.file.getParent() + File.separator + Constants.JAR_TMP_FILE_NAME)
+            //避免上次的缓存被重复插入
+            if (tmpFile.exists()) {
+                tmpFile.delete()
+            }
+            JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
+            //用于保存
+            ArrayList<String> processorList = new ArrayList<>()
+            while (enumeration.hasMoreElements()) {
+                JarEntry jarEntry = (JarEntry) enumeration.nextElement()
+                String entryName = jarEntry.getName()
+                ZipEntry zipEntry = new ZipEntry(entryName)
+
+                // log : entryName : com/dryseed/timecost/TimeCostCanary.class
+                // Log.info(String.format("entryName : %s", entryName))
+
+                InputStream inputStream = jarFile.getInputStream(jarEntry)
+
+                // log : simpleEntryName : com.dryseed.timecost.TimeCostCanary
+                String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
+
+                //插桩class
+                if (shouldModifyClass(entryName, simpleEntryName)) {
+                    //class文件处理
+                    Log.info("jar class : ${simpleEntryName}")
+                    jarOutputStream.putNextEntry(zipEntry)
+                    ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
+                    ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                    def className = entryName.split(".class")[0]
+                    ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
+                    classReader.accept(cv, EXPAND_FRAMES)
+                    byte[] code = classWriter.toByteArray()
+                    jarOutputStream.write(code)
+                } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
+                    if (!processorList.contains(entryName)) {
+                        processorList.add(entryName)
+                        jarOutputStream.putNextEntry(zipEntry)
+                        jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                    } else {
+                        Log.info("duplicate entry : ${entryName}")
+                    }
+                } else {
+                    jarOutputStream.putNextEntry(zipEntry)
+                    jarOutputStream.write(IOUtils.toByteArray(inputStream))
+                }
+
+                jarOutputStream.closeEntry()
+            }
+
+            jarOutputStream.close()
+            jarFile.close()
+        }
     }
 
     /**

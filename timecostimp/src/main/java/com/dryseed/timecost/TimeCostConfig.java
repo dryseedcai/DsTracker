@@ -6,8 +6,9 @@ import com.dryseed.timecost.constants.TimeCostConstant;
  * @author caiminming
  */
 public class TimeCostConfig {
-    public static final int CONFIG_SORT_TYPE_START_TIME = 1;
-    public static final int CONFIG_SORT_TYPE_TIME_COST = 2;
+    public static final int CONFIG_SORT_TYPE_START_TIME = 0;
+    public static final int CONFIG_SORT_TYPE_TIME_COST = 1;
+    public static final int CONFIG_SORT_TYPE_THREAD_TIME_COST = 2;
 
     private TimeCostConfig() {
     }
