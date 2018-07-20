@@ -2,7 +2,6 @@ package com.dryseed.timecost;
 
 import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.utils.Constants;
-import com.dryseed.timecost.utils.Log;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -48,10 +47,10 @@ public class MethodFilterClassVisitor extends ClassVisitor {
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
-        Log.info(String.format(
+        /*Log.info(String.format(
                 "MethodFilterClassVisitor.visit -> version : %d | access : %d | name : %s | signature : %s | superName : %s | interfaces : %s",
                 version, access, name, signature, superName, interfaces)
-        );
+        );*/
     }
 
     @Override
@@ -104,7 +103,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                         monitorOnlyMainThread = (boolean) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD);
                     }
                     generateStartCode(mv, mMethodName, exceededTime, monitorOnlyMainThread);
-                    Log.info(String.format("generate code : %s", mMethodName));
+                    //Log.info(String.format("        ===> generate code : %s --- %s", mClassName, mMethodName));
                 }
                 mAnnotationHashMap.clear();
             }
@@ -120,9 +119,9 @@ public class MethodFilterClassVisitor extends ClassVisitor {
 
             @Override
             public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
+                //Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
                 if (Type.getDescriptor(TimeCost.class).equals(desc)) {
-                    Log.info("found TimeCost Annotation");
+                    //Log.info("found TimeCost Annotation");
                     mIsInject = true;
                 }
                 return new AnnotationMethodsArrayValueScanner();
@@ -192,7 +191,7 @@ public class MethodFilterClassVisitor extends ClassVisitor {
         @Override
         public void visit(String name, Object value) {
             if (mIsInject) {
-                Log.info(String.format("AnnotationMethodsArrayValueScanner.visit: %s -> %s", name, value));
+                //Log.info(String.format("AnnotationMethodsArrayValueScanner.visit: %s -> %s", name, value));
                 mAnnotationHashMap.put(name, value);
                 super.visit(name, value);
             }

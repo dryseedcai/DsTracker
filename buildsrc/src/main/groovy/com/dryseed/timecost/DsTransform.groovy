@@ -1,22 +1,14 @@
 package com.dryseed.timecost
 
-import com.android.build.api.transform.Context
-import com.android.build.api.transform.DirectoryInput
-import com.android.build.api.transform.Format
-import com.android.build.api.transform.JarInput
-import com.android.build.api.transform.QualifiedContent
-import com.android.build.api.transform.Transform
-import com.android.build.api.transform.TransformException
-import com.android.build.api.transform.TransformInput
-import com.android.build.api.transform.TransformOutputProvider
+import com.android.build.api.transform.*
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
-import com.dryseed.timecost.utils.Log
 import com.dryseed.timecost.utils.Constants
-import org.apache.commons.codec.digest.DigestUtils
+import com.dryseed.timecost.utils.Log
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
 import org.gradle.api.Project
+import org.gradle.internal.hash.HashUtil
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
@@ -25,7 +17,6 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
-
 
 import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
 
@@ -39,9 +30,17 @@ class DsTransform extends Transform {
     private static boolean isAutoInject = false
     private static boolean isJarInject = false
     private static HashSet<String> blackPackageList = []
+    private static final String I = File.separator
+    private static final String TRANSFORM_NAME = "DsTransform"
+    private final File mJarCacheDir
+    private final Set<QualifiedContent.Scope> mScopes
+    private final Set<QualifiedContent.Scope> mCareScopes
 
-    DsTransform(Project project) {
+    DsTransform(Project project, File buildDir, Set<QualifiedContent.Scope> scopes) {
         DsTransform.project = project
+        mJarCacheDir = new File(buildDir, "jar-cache")
+        mScopes = Collections.unmodifiableSet(scopes)
+        mCareScopes = new HashSet<>()
     }
 
     /**
@@ -52,7 +51,7 @@ class DsTransform extends Transform {
      */
     @Override
     String getName() {
-        return "DsTransform"
+        return TRANSFORM_NAME
     }
 
     /**
@@ -78,7 +77,7 @@ class DsTransform extends Transform {
      */
     @Override
     Set<QualifiedContent.Scope> getScopes() {
-        return TransformManager.SCOPE_FULL_PROJECT
+        return mScopes
     }
 
     /**
@@ -89,19 +88,19 @@ class DsTransform extends Transform {
         return false
     }
 
-    /**
-     * Transform中的核心方法，
-     * inputs中是传过来的输入流，其中有两种格式，一种是jar包格式一种是目录格式。
-     * outputProvider 获取到输出目录，最后将修改的文件复制到输出目录，这一步必须做不然编译会报错
-     * @param context
-     * @param inputs
-     * @param referencedInputs
-     * @param outputProvider
-     * @param isIncremental
-     * @throws IOException
-     * @throws com.android.build.api.transform.TransformException
-     * @throws InterruptedException
-     */
+/**
+ * Transform中的核心方法，
+ * inputs中是传过来的输入流，其中有两种格式，一种是jar包格式一种是目录格式。
+ * outputProvider 获取到输出目录，最后将修改的文件复制到输出目录，这一步必须做不然编译会报错
+ * @param context
+ * @param inputs
+ * @param referencedInputs
+ * @param outputProvider
+ * @param isIncremental
+ * @throws IOException
+ * @throws com.android.build.api.transform.TransformException
+ * @throws InterruptedException
+ */
     @Override
     void transform(Context context,
                    Collection<TransformInput> inputs,
@@ -110,150 +109,149 @@ class DsTransform extends Transform {
                    boolean isIncremental) throws IOException, TransformException, InterruptedException {
         Log.info(String.format("---------------- %s transform start [%s] --------------", getName(), project.name))
 
-        android = project.extensions.getByType(AppExtension)
+        DsPluginParams timeCostConfig = project.timeCostConfig
 
         // auto inject
-        isAutoInject = project.timeCostConfig.autoInject
+        isAutoInject = timeCostConfig.autoInject
         Log.info("===> config -> autoInject : ${isAutoInject}")
 
         // jar inject
-        isJarInject = project.timeCostConfig.jarInject
+        isJarInject = timeCostConfig.jarInject
         Log.info("===> config -> jarInject : ${isJarInject}")
 
-        Log.info("test =============")
         // black list
-        blackPackageList = project.timeCostConfig.blackPackageList
+        blackPackageList = timeCostConfig.blackPackageList
         blackPackageList.add(Constants.TIME_COST_PACKAGE_NAME)
+        Log.info("===> config -> jarInject : ${blackPackageList}")
 
         // 3rd party JAR packages that want our plugin to inject.
-        HashSet<String> whiteConfigPackageList = project.timeCostConfig.whitePackageList
+        HashSet<String> whiteConfigPackageList = timeCostConfig.whitePackageList
         if (whiteConfigPackageList != null) {
             whitePackageList.addAll(whiteConfigPackageList)
             Log.info("===> config -> whitePackageList : ${whitePackageList}")
         }
 
-        //删除之前的输出
-        if (outputProvider != null) {
-            outputProvider.deleteAll()
+        //scope
+        Log.info("===> config -> scope : ${timeCostConfig.scope}")
+        setCareScope(timeCostConfig.scope)
+
+        // 删除TRANSFORM_NAME目录文件
+        File transformsDir = new File(project.getBuildDir().absolutePath + "${I}intermediates${I}transforms${I}${TRANSFORM_NAME}")
+        FileUtils.deleteDirectory(transformsDir)
+
+        /**
+         * 获取所有依赖的classPaths
+         */
+        def classPaths = []
+        inputs.each { TransformInput input ->
+            Log.info('>>>>>>>>>>>>>>>>>>>>>>>>>')
+            input.directoryInputs.each { DirectoryInput directoryInput ->
+                classPaths.add(directoryInput.file.absolutePath)
+                Log.info("class dir in project(${project.name}) : ${directoryInput.file.absolutePath}")
+            }
+            input.jarInputs.each { JarInput jarInput ->
+                classPaths.add(jarInput.file.absolutePath)
+                Log.info("jar in project(${project.name}) : ${jarInput.file.absolutePath}")
+            }
+            Log.info('<<<<<<<<<<<<<<<<<<<<<<<<')
         }
 
-        //Transform的inputs有两种类型，一种是目录，一种是jar包，要分开遍历
-        inputs.each { TransformInput input ->
-            //对类型为“文件夹”的input进行遍历
-            input.directoryInputs.each {
-                DirectoryInput directoryInput ->
-                    //文件夹里面包含的是我们手写的类以及R.class、BuildConfig.class以及R$XXX.class等
+        for (TransformInput transformInput : inputs) {
+            for (DirectoryInput directoryInput : transformInput.getDirectoryInputs()) {
+                // 获取output目录
+                File output = outputProvider.getContentLocation(
+                        directoryInput.name,
+                        directoryInput.contentTypes,
+                        directoryInput.scopes,
+                        Format.DIRECTORY
+                )
+                Log.info(String.format("destFile : %s \n directoryInput.file.getAbsolutePath() : %s", output, directoryInput.file.getAbsolutePath()))
+                Log.info("directoryInput.getScopes() : ${directoryInput.getScopes()}")
 
-                    //是否是目录
-                    if (directoryInput.file.isDirectory()) {
-                        //遍历目录
-                        directoryInput.file.eachFileRecurse {
-                            File file ->
-                                injectClass(file, directoryInput)
-                        }
-                    }
-
-                    // 获取output目录
-                    def dest = outputProvider.getContentLocation(
-                            directoryInput.name,
-                            directoryInput.contentTypes,
-                            directoryInput.scopes,
-                            Format.DIRECTORY
-                    )
-
-                    // 将input的目录复制到output指定目录
-                    FileUtils.copyDirectory(directoryInput.file, dest)
-            }
-
-            //对类型为jar文件的input进行遍历。
-            input.jarInputs.each { JarInput jarInput ->
-                // 重命名输出文件（同目录copyFile会冲突）
-                def jarInputName = jarInput.name
-                def md5Name = DigestUtils.md5Hex(jarInput.file.getAbsolutePath())
-
-                if (jarInputName.endsWith(".jar")) {
-                    jarInputName = jarInputName.substring(0, jarInputName.length() - 4)
+                if (mCareScopes.containsAll(directoryInput.getScopes())) {
+                    processClassPath(directoryInput.file, directoryInput.file)
                 }
 
+                FileUtils.copyDirectory(directoryInput.file, output)
+            }
+
+            for (JarInput jarInput : transformInput.getJarInputs()) {
+                File input = jarInput.getFile()
                 File tmpFile = null
+                String name = HashUtil.createHash(input, "MD5").asHexString()
 
-                injectJar(tmpFile, jarInput)
+                Log.info("=> jarInput.getScopes() : ${jarInput.getScopes()} | ${jarInput.file.getAbsolutePath()}")
+                if (mCareScopes.containsAll(jarInput.getScopes())) {
+                    File cache = findCachedJar(name)
+                    if (cache != null) {
+                        input = cache
+                    } else {
+                        File tmpDir = context.getTemporaryDir()
+                        if (!tmpDir.isDirectory()) {
+                            if (tmpDir.exists()) {
+                                tmpDir.delete()
+                            }
+                        }
+                        tmpDir.mkdirs()
+                        tmpFile = new File(tmpDir, name + ".jar")
+                        FileUtils.copyFile(input, tmpFile)
+                        input = tmpFile
+                        processClassPath(input, jarInput.file)
+                        cacheProcessedJar(input, name)
+                    }
+                }
 
-                //生成输出路径
-                def dest = outputProvider.getContentLocation(
-                        jarInputName + md5Name,
-                        jarInput.contentTypes,
-                        jarInput.scopes,
-                        Format.JAR
-                )
-                //将输入内容复制到输出
-                if (tmpFile == null) {
-                    FileUtils.copyFile(jarInput.file, dest)
-                } else {
-                    FileUtils.copyFile(tmpFile, dest)
+                File output = outputProvider.getContentLocation(
+                        name, jarInput.getContentTypes(),
+                        jarInput.getScopes(), Format.JAR)
+                FileUtils.copyFile(input, output)
+                if (tmpFile != null) {
                     tmpFile.delete()
                 }
             }
         }
+
         Log.info(String.format("----------------%s %s--------------", getName(), " transform end"))
     }
 
-    private void injectClass(File file, DirectoryInput directoryInput) {
-        def name = file.name
-        // log : file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug\com\dryseed\timecost\MainActivity.class
-        // log : file.name = MainActivity.class
-        // log : directoryInput.file.absolutePath = E:\CodeDs\TimeCost\app\build\intermediates\classes\debug
-        // Log.info("file.absolutePath = ${file.absolutePath}")
-        // Log.info("file.name = ${file.name}")
-        // Log.info("directoryInput.file.absolutePath = ${directoryInput.file.absolutePath}")
-        if (shouldModifyFile(file, directoryInput.file)) {
-            Log.info("filePath = ${file.absolutePath}")
-            ClassReader classReader = new ClassReader(file.bytes)
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
-            def className = name.split(".class")[0]
-            ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
-            classReader.accept(cv, EXPAND_FRAMES)
-            byte[] code = classWriter.toByteArray()
-            FileOutputStream fos = new FileOutputStream(
-                    file.parentFile.absolutePath + File.separator + name)
-            fos.write(code)
-            fos.close()
+    private void processClassPath(File inputFile, File dirFile) {
+        String path = inputFile.absolutePath
+        if (inputFile.isDirectory()) {
+            File[] children = inputFile.listFiles()
+            for (File child : children) {
+                processClassPath(child, dirFile)
+            }
+        } else if (path.endsWith(".jar")) {
+            processJar(inputFile)
+        } else if (path.endsWith(".class") && !path.contains("${File.separator}R\$") && !path.endsWith("${File.separator}R.class") && !path.endsWith("${File.separator}BuildConfig.class")) {
+            processClass(inputFile, dirFile)
         }
     }
 
-    private void injectJar(File tmpFile, JarInput jarInput) {
-        if (isJarInject && jarInput.file.getAbsolutePath().endsWith(".jar")) {
-            Log.info(String.format("jarInput.name : %s", jarInput.file.name))
+    private void processJar(File file) {
+        Log.info("===> processJar : ${file.getAbsolutePath()}")
+        JarFile jarFile = new JarFile(file)
+        Enumeration enumeration = jarFile.entries()
+        File tmpFile = new File(file.getParent(), file.name + ".opt")
+        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
 
-            JarFile jarFile = new JarFile(jarInput.file)
-            Enumeration enumeration = jarFile.entries()
-            //Log.info("tmpFile Name : " + jarInput.file.getParent() + File.separator + jarInput.file.name)
-            tmpFile = new File(jarInput.file.getParent() + File.separator + Constants.JAR_TMP_FILE_NAME)
-            //避免上次的缓存被重复插入
-            if (tmpFile.exists()) {
-                tmpFile.delete()
-            }
-            JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(tmpFile))
-            //用于保存
-            ArrayList<String> processorList = new ArrayList<>()
-            while (enumeration.hasMoreElements()) {
-                JarEntry jarEntry = (JarEntry) enumeration.nextElement()
-                String entryName = jarEntry.getName()
-                ZipEntry zipEntry = new ZipEntry(entryName)
+        while (enumeration.hasMoreElements()) {
+            JarEntry jarEntry = (JarEntry) enumeration.nextElement()
+            String entryName = jarEntry.getName()
+            ZipEntry zipEntry = new ZipEntry(entryName)
 
+            InputStream inputStream = jarFile.getInputStream(jarEntry)
+
+            jarOutputStream.putNextEntry(zipEntry)
+
+            //插桩class
+            if (shouldModifyClassInJar(entryName)) {
                 // log : entryName : com/dryseed/timecost/TimeCostCanary.class
-                // Log.info(String.format("entryName : %s", entryName))
-
-                InputStream inputStream = jarFile.getInputStream(jarEntry)
-
-                // log : simpleEntryName : com.dryseed.timecost.TimeCostCanary
                 String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
-
-                //插桩class
-                if (shouldModifyClass(entryName, simpleEntryName)) {
+                if (shouldModifyClass(simpleEntryName)) {
                     //class文件处理
-                    Log.info("jar class : ${simpleEntryName}")
-                    jarOutputStream.putNextEntry(zipEntry)
+                    Log.info("  ===> modifyJarClass : ${simpleEntryName}")
+
                     ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
                     ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
                     def className = entryName.split(".class")[0]
@@ -261,24 +259,53 @@ class DsTransform extends Transform {
                     classReader.accept(cv, EXPAND_FRAMES)
                     byte[] code = classWriter.toByteArray()
                     jarOutputStream.write(code)
-                } else if (entryName.contains("META-INF/services/javax.annotation.processing.Processor")) {
-                    if (!processorList.contains(entryName)) {
-                        processorList.add(entryName)
-                        jarOutputStream.putNextEntry(zipEntry)
-                        jarOutputStream.write(IOUtils.toByteArray(inputStream))
-                    } else {
-                        Log.info("duplicate entry : ${entryName}")
-                    }
                 } else {
-                    jarOutputStream.putNextEntry(zipEntry)
                     jarOutputStream.write(IOUtils.toByteArray(inputStream))
                 }
-
-                jarOutputStream.closeEntry()
+            } else {
+                jarOutputStream.write(IOUtils.toByteArray(inputStream))
             }
 
-            jarOutputStream.close()
-            jarFile.close()
+
+            jarOutputStream.closeEntry()
+        }
+
+        jarOutputStream.close()
+        jarFile.close()
+
+        if (file.exists()) {
+            file.delete()
+        }
+        tmpFile.renameTo(file)
+        if (tmpFile.exists()) {
+            tmpFile.delete()
+        }
+    }
+
+
+    private void processClass(File file, File dirFile) {
+        Log.info("===> processClass : ${file.getAbsolutePath()}")
+        if (shouldModifyFile(file, dirFile)) {
+            Log.info("  ===> modifyClass : ${file.getAbsolutePath()}")
+            try {
+                ClassReader classReader = new ClassReader(file.bytes)
+                ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
+                def className = file.name.split(".class")[0]
+                ClassVisitor cv = new MethodFilterClassVisitor(className, classWriter, isAutoInject)
+                classReader.accept(cv, EXPAND_FRAMES)
+                byte[] code = classWriter.toByteArray()
+                File optClass = new File(file.getParent(), file.name + ".opt")
+                FileOutputStream fos = new FileOutputStream(optClass)
+                fos.write(code)
+                IOUtils.closeQuietly(fos)
+                FileUtils.forceDelete(file)
+                FileUtils.moveFile(optClass, file)
+                if (optClass.exists()) {
+                    optClass.delete()
+                }
+            } catch (Exception e) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -300,62 +327,114 @@ class DsTransform extends Transform {
         // eg : com.dryseed.timecost.MainActivity
         className = className.replace(File.separator, ".").replace(".class", "")
 
-        return shouldModifyClass(name, className)
+        return shouldModifyClass(className)
+    }
+
+    /**
+     * check class in jar whether is inject target
+     * @param entryName
+     * @return
+     */
+    private boolean shouldModifyClassInJar(String entryName) {
+        if (!entryName.endsWith(".class")) {
+            return false
+        }
+        if (entryName.contains("/R\$") || entryName.endsWith("/R.class") || entryName.endsWith("/BuildConfig.class")) {
+            return false
+        }
+        return true
     }
 
     /**
      * check class whether is inject target
-     * @param name eg : MainActivity.class
      * @param className eg : com.dryseed.timecost.MainActivity
      * @return
      */
-    private boolean shouldModifyClass(String name, String className) {
-        if (name.startsWith("R\$") || "R.class".equals(name) || "BuildConfig.class".equals(name)) {
+    private boolean shouldModifyClass(String className) {
+        if (whitePackageList.isEmpty() && isAutoInject) {
+            // auto inject is based on white list
+            Log.info("return false : auto inject is based on white list - ${className}")
             return false
         }
 
-        if (name.endsWith(".class")) {
-            if (whitePackageList.isEmpty() && isAutoInject) {
-                // auto inject is based on white list
-                Log.info("return false : auto inject is based on white list - ${className}")
-                return false
-            }
-
-            if (null != blackPackageList && !blackPackageList.isEmpty()) {
-                // has black list
-                Iterator<String> iterator = blackPackageList.iterator()
-                while (iterator.hasNext()) {
-                    String packagename = iterator.next()
-                    if (className.contains(packagename)) {
-                        Log.info("return false : hit black list ${className} - ${packagename}")
-                        return false
-                    }
-                }
-            }
-
-            if (whitePackageList.isEmpty()) {
-                // no white list, all class is valid
-                Log.info("return true : no white list, all class is valid - ${className}")
-                return true
-            }
-
-            // has white list
-            Iterator<String> iterator = whitePackageList.iterator()
+        if (null != blackPackageList && !blackPackageList.isEmpty()) {
+            // has black list
+            Iterator<String> iterator = blackPackageList.iterator()
             while (iterator.hasNext()) {
                 String packagename = iterator.next()
-                //Log.info("=================================== packagename : ${packagename} | name : ${className}")
                 if (className.contains(packagename)) {
-                    Log.info("return true : class is in whitelist : ${className}")
-                    return true
+                    Log.info("return false : hit black list ${className} - ${packagename}")
+                    return false
                 }
             }
-
-            //Log.info("return false : other - ${className}")
-            return false
         }
 
-        //Log.info("check class : the class has not be recognized -- ${name}")
+        if (whitePackageList.isEmpty()) {
+            // no white list, all class is valid
+            Log.info("return true : no white list, all class is valid - ${className}")
+            return true
+        }
+
+        // has white list
+        Iterator<String> iterator = whitePackageList.iterator()
+        while (iterator.hasNext()) {
+            String packagename = iterator.next()
+            //Log.info("=================================== packagename : ${packagename} | name : ${className}")
+            if (className.contains(packagename)) {
+                Log.info("return true : class is in whitelist : ${className}")
+                return true
+            }
+        }
+
+        //Log.info("return false : other - ${className}")
         return false
     }
 
+    File findCachedJar(String md5) {
+        if (!mJarCacheDir.isDirectory()) {
+            if (mJarCacheDir.exists()) {
+                mJarCacheDir.delete()
+            }
+            return null
+        }
+        String target = md5 + ".jar"
+        String[] files = mJarCacheDir.list()
+        for (String name : files) {
+            if (target == name) {
+                return new File(mJarCacheDir, target)
+            }
+        }
+        return null
+    }
+
+    void cacheProcessedJar(File jar, String md5) {
+        if (!mJarCacheDir.isDirectory()) {
+            if (mJarCacheDir.exists()) {
+                mJarCacheDir.delete()
+            }
+        }
+        if (!mJarCacheDir.exists()) {
+            mJarCacheDir.mkdirs()
+        }
+        FileUtils.copyFile(jar, new File(mJarCacheDir, md5 + ".jar"))
+    }
+
+    void setCareScope(DsPluginParams.Scope scope) {
+        mCareScopes.clear()
+        if (scope.project) {
+            mCareScopes.add(QualifiedContent.Scope.PROJECT)
+        }
+        if (scope.projectLocalDep) {
+            mCareScopes.add(QualifiedContent.Scope.PROJECT_LOCAL_DEPS)
+        }
+        if (scope.subProject) {
+            mCareScopes.add(QualifiedContent.Scope.SUB_PROJECTS)
+        }
+        if (scope.subProjectLocalDep) {
+            mCareScopes.add(QualifiedContent.Scope.SUB_PROJECTS_LOCAL_DEPS)
+        }
+        if (scope.externalLibraries) {
+            mCareScopes.add(QualifiedContent.Scope.EXTERNAL_LIBRARIES)
+        }
+    }
 }

@@ -1,11 +1,15 @@
 package com.dryseed.timecost;
 
+import android.text.TextUtils;
+
+import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
 import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,8 +33,20 @@ public class TimeCostCore {
     /**
      * Save TimeCostInfo during the method invocation
      */
-    public ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap1 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap2 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap3 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap4 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap5 = new ConcurrentHashMap<>();
+    private List<ConcurrentHashMap<String, TimeCostInfo>> mHashMapList = new ArrayList<>();
 
+    public TimeCostCore() {
+        mHashMapList.add(mTimeCostInfoHashMap1);
+        mHashMapList.add(mTimeCostInfoHashMap2);
+        mHashMapList.add(mTimeCostInfoHashMap3);
+        mHashMapList.add(mTimeCostInfoHashMap4);
+        mHashMapList.add(mTimeCostInfoHashMap5);
+    }
 
     /**
      * Get TimeCostCore singleton
@@ -78,14 +94,23 @@ public class TimeCostCore {
      *
      * @param methodName
      * @param curTime
-     * @param exceededTime
+     * @param exceedTime
+     * @param threadExceedTime
+     * @param monitorOnlyMainThread
      */
-    public void setStartTime(String methodName, long curTime, long curThreadTime, long exceededTime, boolean monitorOnlyMainThread) {
+    public void setStartTime(String methodName, long curTime, long curThreadTime, long exceedTime, long threadExceedTime, boolean monitorOnlyMainThread) {
         if (!checkThread(monitorOnlyMainThread)) {
             DebugLog.d(TAG, "thread is not valid !!!");
             return;
         }
-        mTimeCostInfoHashMap.put(methodName, TimeCostInfo.parse(methodName, curTime, curThreadTime, exceededTime));
+
+        if (TextUtils.isEmpty(methodName)) {
+            DebugLog.d(TAG, "methodName is not valid !!!");
+            return;
+        }
+
+        int index = methodName.length() % 5;
+        mHashMapList.get(index).put(methodName, TimeCostInfo.parse(methodName, curTime, curThreadTime, exceedTime, threadExceedTime));
     }
 
     /**
@@ -95,13 +120,21 @@ public class TimeCostCore {
      * @param time
      */
     public void setEndTime(String methodName, long time, long threadTime) {
-        TimeCostInfo timeCostInfo = mTimeCostInfoHashMap.get(methodName);
+        if (TextUtils.isEmpty(methodName)) {
+            DebugLog.d(TAG, "methodName is not valid !!!");
+            return;
+        }
+
+        int index = methodName.length() % 5;
+        TimeCostInfo timeCostInfo = mHashMapList.get(index).get(methodName);
+
         if (null == timeCostInfo) {
             return;
         }
         timeCostInfo.setEndMilliTime(time);
         timeCostInfo.setEndThreadMilliTime(threadTime);
         handleCost(timeCostInfo);
+        mHashMapList.get(index).remove(methodName);
     }
 
     /**
@@ -140,10 +173,11 @@ public class TimeCostCore {
 
         } else {
             DebugLog.d(TAG, String.format(
-                    "%s has not exceed time. TimeCost : %d | ExceededTime : %d",
-                    timeCostInfo.getName(),
+                    "[TimeCost:%d][ThreadTimeCost:%d][ExceededTime:%d] . %s has not exceed time. ",
                     timeCostInfo.getTimeCost(),
-                    timeCostInfo.getExceedMilliTime())
+                    timeCostInfo.getThreadTimeCost(),
+                    timeCostInfo.getExceedMilliTime(),
+                    timeCostInfo.getName())
             );
         }
     }

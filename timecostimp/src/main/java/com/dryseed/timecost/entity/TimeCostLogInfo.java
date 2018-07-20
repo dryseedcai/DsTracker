@@ -28,7 +28,9 @@ public class TimeCostLogInfo extends TimeCostInfo {
                 } else if (line.startsWith(KEY_END_TIME)) {
                     timeCostLogInfo.mEndMilliTime = Long.valueOf(line.split(EQUALS)[1]);
                 } else if (line.startsWith(KEY_EXCEED_TIME)) {
-                    timeCostLogInfo.mEndMilliTime = Long.valueOf(line.split(EQUALS)[1]);
+                    timeCostLogInfo.mExceedMilliTime = Long.valueOf(line.split(EQUALS)[1]);
+                } else if (line.startsWith(KEY_THREAD_EXCEED_TIME)) {
+                    timeCostLogInfo.mThreadExceedMilliTime = Long.valueOf(line.split(EQUALS)[1]);
                 } else if (line.startsWith(KEY_TIME_COST)) {
                     timeCostLogInfo.mTimeCost = Long.valueOf(line.split(EQUALS)[1]);
                 } else if (line.startsWith(KEY_THREAD_TIME_COST)) {

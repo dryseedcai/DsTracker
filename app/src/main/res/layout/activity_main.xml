@@ -13,7 +13,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod"
-        android:text=" @TimeCost(name = &quot;myMethod&quot;, milliTime = 500L)" />
+        android:text="Thread.sleep(2000);" />
 
     <Button
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod2"
-        android:text=" @TimeCost(name = &quot;myMethod2&quot;)" />
+        android:text="子线程 sleep 2000ms" />
 
     <Button
         android:layout_width="match_parent"
@@ -29,7 +29,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod3"
-        android:text="jar -> @TimeCost(milliTime = 300L)" />
+        android:text="TestJar" />
 
     <Button
         android:layout_width="match_parent"
@@ -37,7 +37,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod4"
-        android:text="Work Thread" />
+        android:text="TestModule" />
 
     <Button
         android:layout_width="match_parent"
@@ -45,7 +45,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod5"
-        android:text="AAR" />
+        android:text="TestAar" />
 
     <Button
         android:layout_width="match_parent"
@@ -53,7 +53,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod6"
-        android:text="ThreadTime1" />
+        android:text="Long-Running Operations" />
 
     <Button
         android:layout_width="match_parent"
@@ -61,14 +61,7 @@
         android:layout_marginTop="10dp"
         android:gravity="center"
         android:onClick="myMethod7"
-        android:text="ThreadTime2" />
+        android:text="MutliTask" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginTop="10dp"
-        android:gravity="center"
-        android:onClick="myMethod8"
-        android:text="ThreadTime3" />
 
 </LinearLayout>

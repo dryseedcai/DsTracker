@@ -1,17 +1,16 @@
 package com.dryseed.testtimecost;
 
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.utils.DebugLog;
 import com.example.testaar.TestAar;
 import com.example.testlibrary.TestLibrary;
-
-import java.util.logging.Logger;
+import com.example.testmodule.TestModule;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,91 +21,85 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
     }
 
+    /**
+     * ThreadExceedTime=0 | ExceedTime = 1200
+     * ThreadExceedTime是否work
+     *
+     * @param view
+     */
     @TimeCost(name = "myMethod", milliTime = 500L)
     public void myMethod(View view) {
         try {
-            Thread.sleep(1200);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * 子线程sleep
+     * monitorOnlyMainThread是否work
+     *
+     * @param view
+     */
     @TimeCost(name = "myMethod2")
     public void myMethod2(View view) {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void myMethod3(View view) {
-        TestLibrary testLibrary = new TestLibrary();
-        testLibrary.testLibraryMethod();
-    }
-
-    @TimeCost(name = "myMethod4")
-    public void myMethod4(View view) {
         new Thread(new Runnable() {
             @Override
             @TimeCost(name = "myMethod4_run", monitorOnlyMainThread = true)
             public void run() {
-                myMehtod4Inner();
+                myMehtod2Inner();
             }
         }).start();
     }
 
-    @TimeCost(name = "myMethod4_inner", monitorOnlyMainThread = true)
-    public void myMehtod4Inner() {
-        try {
-            Thread.sleep(1000L);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void myMethod5(View view) {
-        new TestAar().testAarMethod();
-    }
-
-    public void myMethod6(View view) {
-        long timeStart = System.currentTimeMillis();
-        long threadTimeStart = SystemClock.currentThreadTimeMillis();
-        DebugLog.d("MMM", String.format("myMethod6 Time : %d | ThreadTime : %d", timeStart, threadTimeStart));
+    @TimeCost(monitorOnlyMainThread = true)
+    public void myMehtod2Inner() {
         try {
             Thread.sleep(2000L);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        DebugLog.d("MMM", String.format("TimeInterval : %d | ThreadTimeInterval : %d", System.currentTimeMillis() - timeStart, SystemClock.currentThreadTimeMillis() - threadTimeStart));
-
-        /**
-         * log:
-         * 时钟时长，表示方法执行所消耗的时钟时间，即使方法没有占用 cpu，仅等待另一线程的完成，时长也会被记录。
-         * Cpu 时长，表示方法执行所消耗的 cpu 时间，当方法没有占用 cpu 时，时间不会被记录。
-         *
-         * 07-17 18:55:06.834 12954-12954/com.dryseed.timecost D/MMM: myMethod6 Time : 1531824906834 | ThreadTime : 220
-         * 07-17 18:55:08.834 12954-12954/com.dryseed.timecost D/MMM: TimeInterval : 2000 | ThreadTimeInterval : 0
-         */
     }
 
-    public void myMethod7(View view) {
-        long timeStart = System.currentTimeMillis();
-        long threadTimeStart = SystemClock.currentThreadTimeMillis();
-        DebugLog.d("MMM", String.format("myMethod7 Time : %d | ThreadTime : %d", timeStart, threadTimeStart));
-
-        new Thread(new SomeTest()).start();
-
-        DebugLog.d("MMM", String.format("TimeInterval : %d | ThreadTimeInterval : %d", System.currentTimeMillis() - timeStart, SystemClock.currentThreadTimeMillis() - threadTimeStart));
-
-        /**
-         * log:
-         * 07-17 18:57:44.799 12954-12954/com.dryseed.timecost D/MMM: myMethod7 Time : 1531825064798 | ThreadTim
-         * 07-17 18:57:44.799 12954-12954/com.dryseed.timecost D/MMM: TimeInterval : 1 | ThreadTimeInterval : 1
-         */
+    /**
+     * Test Jar
+     *
+     * @param view
+     */
+    public void myMethod3(View view) {
+        TestLibrary testLibrary = new TestLibrary();
+        testLibrary.testLibraryMethod();
     }
 
-    public void myMethod8(View view) {
+    /**
+     * Test Module
+     *
+     * @param view
+     */
+    public void myMethod4(View view) {
+        TestModule testModule = new TestModule();
+        testModule.testModuleMethod();
+    }
+
+    /**
+     * Test AAR
+     *
+     * @param view
+     */
+    public void myMethod5(View view) {
+        new TestAar().testAarMethod();
+    }
+
+    /**
+     * log:
+     * 时钟时长，表示方法执行所消耗的时钟时间，即使方法没有占用 cpu，仅等待另一线程的完成，时长也会被记录。
+     * Cpu 时长，表示方法执行所消耗的 cpu 时间，当方法没有占用 cpu 时，时间不会被记录。
+     * <p>
+     * 07-17 18:55:06.834 12954-12954/com.dryseed.timecost D/MMM: myMethod6 Time : 1531824906834 | ThreadTime : 220
+     * 07-17 18:55:08.834 12954-12954/com.dryseed.timecost D/MMM: TimeInterval : 2000 | ThreadTimeInterval : 0
+     */
+    public void myMethod6(View view) {
         long timeStart = System.currentTimeMillis();
         long threadTimeStart = SystemClock.currentThreadTimeMillis();
         DebugLog.d("MMM", String.format("myMehtod8 Time : %d | ThreadTime : %d", timeStart, threadTimeStart));
@@ -121,4 +114,21 @@ public class MainActivity extends AppCompatActivity {
          * 07-17 18:59:26.157 13190-13190/com.dryseed.timecost D/MMM: TimeInterval : 1953 | ThreadTimeInterval : 1465
          */
     }
+
+    /**
+     * 多任务同时进行
+     * @param view
+     */
+    public void myMethod7(View view) {
+        for (int i = 0; i < 15; i++) {
+            new Handler().post(new Runnable() {
+                @Override
+                public void run() {
+                    new SomeTest().someM();
+                }
+            });
+        }
+    }
+
+
 }

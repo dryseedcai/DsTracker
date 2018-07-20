@@ -19,7 +19,7 @@ repositories {
 
 //group和version
 group='com.dryseed.timecost.gradle'
-version='1.0.0'
+version='1.0.5'
 
 //打包到本地或者远程Maven库
 uploadArchives {

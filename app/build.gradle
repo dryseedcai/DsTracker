@@ -13,7 +13,7 @@ android {
     buildToolsVersion '27.0.1'
     defaultConfig {
         applicationId "com.dryseed.timecost"
-        minSdkVersion 15
+        minSdkVersion 14
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -51,8 +51,9 @@ dependencies {
     //releaseCompile project(':timecostimp-no-op')
 
     //compile project(':testlibrary')
-    //compile(name: 'testlibrary', ext: 'aar')
-    compile project(':testaar')
+    compile(name: 'testaar', ext: 'aar')
+    //compile project(':testaar')
+    compile project(':testmodule')
 }
 
 timeCostConfig {
@@ -61,13 +62,24 @@ timeCostConfig {
     // this is a kit feature of the plugin, set it true to see the time consume of this build
     watchTaskTimeCost = true
     // the plugin will only inject package / class defined in whitePackageList
-    whitePackageList = ['com.dryseed.testtimecost', 'com.dryseed.testwhitelist', 'com.example.testaar']
-    // thp plugin will not inject package, white list has a higher priority than white list
+    whitePackageList = [
+            'com.dryseed.testtimecost', 'com.dryseed.testwhitelist',
+            'com.example.testaar', 'com.example.testlibrary',
+            'com.example.testmodule'
+    ]
+    // the plugin will not inject package, white list has a higher priority than white list
     blackPackageList = []
     // the plugin will inject automatically based on whitePackageList
     autoInject = true
     // this flag will decide whether the plugin will inject the jars, false by default
-    //jarInject = false
+    jarInject = true
+    scope {
+        project true //inject app project, default true
+        projectLocalDep false //inject app libs(eg: .jar), default false
+        subProject true //inject subProject of app project(eg: module), default true
+        subProjectLocalDep false //inject subProject libs, default false
+        externalLibraries false //inject external libs(eg: .aar), default false
+    }
 }
 
 

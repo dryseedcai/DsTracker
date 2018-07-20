@@ -7,7 +7,7 @@ android {
 
 
     defaultConfig {
-        minSdkVersion 15
+        minSdkVersion 14
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -37,7 +37,7 @@ dependencies {
 
 //group和version
 group='com.dryseed.timecost'
-version='1.0.0'
+version='1.0.3'
 
 //打包到本地或者远程Maven库
 uploadArchives {

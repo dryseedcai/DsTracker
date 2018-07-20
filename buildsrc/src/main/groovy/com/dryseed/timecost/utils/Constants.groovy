@@ -1,6 +1,5 @@
 package com.dryseed.timecost.utils
 
-
 class Constants {
     public static final String ANNOTATION_COLUMN_NAME = "name"
     public static final String ANNOTATION_COLUMN_MILLITIME = "milliTime"

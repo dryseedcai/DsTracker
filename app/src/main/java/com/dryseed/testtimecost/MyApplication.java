@@ -14,7 +14,8 @@ public class MyApplication extends Application {
         super.onCreate();
         TimeCostCanary.install(this).config(
                 new TimeCostConfig.Builder()
-                        .setMilliExceedTime(200L)
+                        .setExceedMilliTime(1000L)
+                        .setThreadExceedMilliTime(1000L)
                         .setMonitorOnlyMainThread(true)
                         .setSortType(TimeCostConfig.CONFIG_SORT_TYPE_START_TIME)
                         .setShowDetailUI(true)

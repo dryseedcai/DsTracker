@@ -153,7 +153,7 @@ public class TimeCostCanary {
         }
         long curTime = System.currentTimeMillis();
         long curThreadTime = SystemClock.currentThreadTimeMillis();
-        mTimeCostCore.setStartTime(methodName, curTime, curThreadTime, exceededTime, monitorOnlyMainThread);
+        mTimeCostCore.setStartTime(methodName, curTime, curThreadTime, exceededTime, exceededTime, monitorOnlyMainThread);
     }
 
     /**
