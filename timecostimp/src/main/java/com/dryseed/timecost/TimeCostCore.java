@@ -9,10 +9,11 @@ import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author caiminming
@@ -38,14 +39,22 @@ public class TimeCostCore {
     private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap3 = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap4 = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap5 = new ConcurrentHashMap<>();
-    private List<ConcurrentHashMap<String, TimeCostInfo>> mHashMapList = new ArrayList<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap6 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap7 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap8 = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<String, TimeCostInfo>> mHashMaps = new ConcurrentHashMap<>();
+    private int mHashMapListSize;
 
     public TimeCostCore() {
-        mHashMapList.add(mTimeCostInfoHashMap1);
-        mHashMapList.add(mTimeCostInfoHashMap2);
-        mHashMapList.add(mTimeCostInfoHashMap3);
-        mHashMapList.add(mTimeCostInfoHashMap4);
-        mHashMapList.add(mTimeCostInfoHashMap5);
+        mHashMaps.put(0, mTimeCostInfoHashMap1);
+        mHashMaps.put(1, mTimeCostInfoHashMap2);
+        mHashMaps.put(2, mTimeCostInfoHashMap3);
+        mHashMaps.put(3, mTimeCostInfoHashMap4);
+        mHashMaps.put(4, mTimeCostInfoHashMap5);
+        mHashMaps.put(5, mTimeCostInfoHashMap6);
+        mHashMaps.put(6, mTimeCostInfoHashMap7);
+        mHashMaps.put(7, mTimeCostInfoHashMap8);
+        mHashMapListSize = 8;
     }
 
     /**
@@ -98,19 +107,22 @@ public class TimeCostCore {
      * @param threadExceedTime
      * @param monitorOnlyMainThread
      */
-    public void setStartTime(String methodName, long curTime, long curThreadTime, long exceedTime, long threadExceedTime, boolean monitorOnlyMainThread) {
-        if (!checkThread(monitorOnlyMainThread)) {
-            DebugLog.d(TAG, "thread is not valid !!!");
-            return;
-        }
-
+    public void setStartTime(final String methodName, final long curTime, final long curThreadTime,
+                             final long exceedTime, final long threadExceedTime, final boolean monitorOnlyMainThread) {
         if (TextUtils.isEmpty(methodName)) {
             DebugLog.d(TAG, "methodName is not valid !!!");
             return;
         }
 
-        int index = methodName.length() % 5;
-        mHashMapList.get(index).put(methodName, TimeCostInfo.parse(methodName, curTime, curThreadTime, exceedTime, threadExceedTime));
+        if (!checkThread(monitorOnlyMainThread)) {
+            DebugLog.d(TAG, "thread is not valid !!!");
+            return;
+        }
+
+        int index = methodName.length() % mHashMapListSize;
+        TimeCostInfo timeCostInfo = TimeCostInfo.parse(methodName, curTime, curThreadTime, exceedTime, threadExceedTime);
+        DebugLog.d(String.format("=============> 111 [methodName:%s][timeCostInfo:%s][index:%d]", methodName, timeCostInfo.toString(), index));
+        mHashMaps.get(index).put(methodName, timeCostInfo);
     }
 
     /**
@@ -119,22 +131,23 @@ public class TimeCostCore {
      * @param methodName
      * @param time
      */
-    public void setEndTime(String methodName, long time, long threadTime) {
+    public void setEndTime(final String methodName, final long time, final long threadTime) {
         if (TextUtils.isEmpty(methodName)) {
             DebugLog.d(TAG, "methodName is not valid !!!");
             return;
         }
 
-        int index = methodName.length() % 5;
-        TimeCostInfo timeCostInfo = mHashMapList.get(index).get(methodName);
+        int index = methodName.length() % mHashMapListSize;
+        TimeCostInfo timeCostInfo = mHashMaps.get(index).get(methodName);
 
         if (null == timeCostInfo) {
             return;
         }
+        DebugLog.d(String.format("=============> 222 [methodName:%s][timeCostInfo:%s][index:%d]", methodName, timeCostInfo.toString(), index));
         timeCostInfo.setEndMilliTime(time);
         timeCostInfo.setEndThreadMilliTime(threadTime);
         handleCost(timeCostInfo);
-        mHashMapList.get(index).remove(methodName);
+        mHashMaps.get(index).remove(methodName);
     }
 
     /**
@@ -149,9 +162,10 @@ public class TimeCostCore {
 
         if (timeCostInfo.isExceed()) {
             DebugLog.w(TAG, String.format(
-                    "%s has exceed time. TimeCost : %d | ExceededTime : %d",
+                    "%s has exceed time. [TimeCost:%d][ThreadTimeCost:%d][ExceededTime:%d]",
                     timeCostInfo.getName(),
                     timeCostInfo.getTimeCost(),
+                    timeCostInfo.getThreadTimeCost(),
                     timeCostInfo.getExceedMilliTime())
             );
 

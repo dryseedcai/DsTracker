@@ -1,6 +1,11 @@
 package com.dryseed.timecost.entity;
 
+import android.text.TextUtils;
+
 import com.dryseed.timecost.TimeCostCanary;
+import com.dryseed.timecost.utils.DebugLog;
+
+import java.util.Objects;
 
 /**
  * @author caiminming
@@ -103,6 +108,12 @@ public class TimeCostInfo {
     public void setEndThreadMilliTime(long endThreadMilliTime) {
         mEndThreadMilliTime = endThreadMilliTime;
         mThreadTimeCost = mEndThreadMilliTime - mStartThreadMilliTime;
+        DebugLog.d(String.format(
+                "setEndThreadMilliTime [mThreadTimeCost:%d][mEndThreadMilliTime:%d][mStartThreadMilliTime:%d]",
+                mThreadTimeCost,
+                mEndThreadMilliTime,
+                mStartThreadMilliTime
+        ));
     }
 
     public long getEndMilliTime() {
@@ -112,6 +123,12 @@ public class TimeCostInfo {
     public void setEndMilliTime(long endMilliTime) {
         mEndMilliTime = endMilliTime;
         mTimeCost = mEndMilliTime - mStartMilliTime;
+        DebugLog.d(String.format(
+                "setEndMilliTime [mTimeCost:%d][mEndMilliTime:%d][mStartMilliTime:%d]",
+                mTimeCost,
+                mEndMilliTime,
+                mStartMilliTime
+        ));
     }
 
     public long getExceedMilliTime() {
@@ -171,5 +188,21 @@ public class TimeCostInfo {
 
     public boolean isExceed() {
         return mTimeCost > mExceedMilliTime && mThreadTimeCost > mThreadExceedMilliTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (null != o && this.getClass() == o.getClass()) {
+            return TextUtils.equals(mMethodName, ((TimeCostInfo) o).mMethodName);
+        }
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        if (!TextUtils.isEmpty(mMethodName)) {
+            return mMethodName.hashCode();
+        }
+        return super.hashCode();
     }
 }

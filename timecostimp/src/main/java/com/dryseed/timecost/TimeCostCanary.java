@@ -146,13 +146,13 @@ public class TimeCostCanary {
      * @param monitorOnlyMainThread
      */
     public void setStartTime(String methodName, long exceededTime, boolean monitorOnlyMainThread) {
-        DebugLog.d(TAG, String.format("setStartTime : %s", methodName));
         if (!sHasInstalled || !mIsRunning) {
             DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         long curTime = System.currentTimeMillis();
         long curThreadTime = SystemClock.currentThreadTimeMillis();
+        DebugLog.d(TAG, String.format("setStartTime : [methodName:%s][curTime:%d][curThreadTime:%d]", methodName, curTime, curThreadTime));
         mTimeCostCore.setStartTime(methodName, curTime, curThreadTime, exceededTime, exceededTime, monitorOnlyMainThread);
     }
 
@@ -162,13 +162,13 @@ public class TimeCostCanary {
      * @param methodName
      */
     public void setEndTime(String methodName) {
-        DebugLog.d(TAG, String.format("setEndTime"));
         if (!sHasInstalled || !mIsRunning) {
-            DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
+            DebugLog.d(TAG, String.format("setEndTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         long curTime = System.currentTimeMillis();
         long curThreadTime = SystemClock.currentThreadTimeMillis();
+        DebugLog.d(TAG, String.format("setEndTime : [methodName:%s][curTime:%d][curThreadTime:%d]", methodName, curTime, curThreadTime));
         mTimeCostCore.setEndTime(methodName, curTime, curThreadTime);
     }
 
