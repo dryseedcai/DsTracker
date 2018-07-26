@@ -6,10 +6,6 @@ import com.dryseed.timecost.constants.TimeCostConstant;
  * @author caiminming
  */
 public class TimeCostConfig {
-    public static final int CONFIG_SORT_TYPE_START_TIME = 0;
-    public static final int CONFIG_SORT_TYPE_TIME_COST = 1;
-    public static final int CONFIG_SORT_TYPE_THREAD_TIME_COST = 2;
-
     private TimeCostConfig() {
     }
 
@@ -26,6 +22,16 @@ public class TimeCostConfig {
     private String mLogPath;
 
     private int mSortType;
+
+    private long mNotifyInterval;
+
+    public long getNotifyInterval() {
+        return mNotifyInterval;
+    }
+
+    public void setNotifyInterval(long notifyInterval) {
+        mNotifyInterval = notifyInterval;
+    }
 
     public long getThreadExceedMilliTime() {
         return mThreadExceedMilliTime;
@@ -94,9 +100,16 @@ public class TimeCostConfig {
 
         private boolean mShowDetailUI = true;
 
-        private int mSortType = CONFIG_SORT_TYPE_START_TIME;
+        private int mSortType = TimeCostConstant.CONFIG_SORT_TYPE_START_TIME;
 
         private String mLogPath = TimeCostConstant.TIME_COST_DEFAULT_LOG_DIR;
+
+        private long mNotifyInterval = TimeCostConstant.TIME_COST_NOTIFY_INTERVAL;
+
+        public Builder setNotifyInterval(long notifyInterval) {
+            mNotifyInterval = notifyInterval;
+            return this;
+        }
 
         public Builder setSortType(int sortType) {
             mSortType = sortType;
@@ -153,6 +166,7 @@ public class TimeCostConfig {
             config.mShowDetailUI = this.mShowDetailUI;
             config.mLogPath = this.mLogPath;
             config.mSortType = this.mSortType;
+            config.mNotifyInterval = this.mNotifyInterval;
             return config;
         }
     }

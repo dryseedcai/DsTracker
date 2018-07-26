@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.dryseed.timecost.TimeCostCanary;
 import com.dryseed.timecost.TimeCostConfig;
+import com.dryseed.timecost.constants.TimeCostConstant;
 
 /**
  * @author caiminming
@@ -17,7 +18,7 @@ public class MyApplication extends Application {
                         .setExceedMilliTime(1000L)
                         .setThreadExceedMilliTime(1000L)
                         .setMonitorOnlyMainThread(true)
-                        .setSortType(TimeCostConfig.CONFIG_SORT_TYPE_START_TIME)
+                        .setSortType(TimeCostConstant.CONFIG_SORT_TYPE_START_TIME)
                         .setShowDetailUI(true)
                         .build()
         );

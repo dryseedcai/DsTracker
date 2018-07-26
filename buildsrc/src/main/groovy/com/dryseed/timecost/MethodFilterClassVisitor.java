@@ -16,6 +16,8 @@ import static org.objectweb.asm.Opcodes.ICONST_0;
 import static org.objectweb.asm.Opcodes.ICONST_1;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.LSTORE;
 
 /**
  * @User caiminming
@@ -66,97 +68,30 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 access, name, desc, signature, exceptions)
         );*/
         MethodVisitor methodVisitor = cv.visitMethod(access, name, desc, signature, exceptions);
-        methodVisitor = new AdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc) {
-
-            @Override
-            public void visitCode() {
-                super.visitCode();
-
-            }
-
-            @Override
-            public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-                super.visitFieldInsn(opcode, owner, name, desc);
-            }
-
-            @Override
-            public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-                super.visitMethodInsn(opcode, owner, name, desc, itf);
-            }
-
-            @Override
-            protected void onMethodEnter() {
-                //Log.info("AdviceAdapter onMethodEnter");
-                //统计方法耗时
-                if (mIsAutoInject || mIsInject) {
-                    if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_NAME)) {
-                        mMethodName = (String) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_NAME);
-                    } else {
-                        mMethodName = mClassName + ":" + name + desc;
-                    }
-
-                    long exceededTime = 0;
-                    boolean monitorOnlyMainThread = false;
-                    if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MILLITIME)) {
-                        exceededTime = (long) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MILLITIME);
-                    } else if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD)) {
-                        monitorOnlyMainThread = (boolean) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD);
-                    }
-                    generateStartCode(mv, mMethodName, exceededTime, monitorOnlyMainThread);
-                    //Log.info(String.format("        ===> generate code : %s --- %s", mClassName, mMethodName));
-                }
-                mAnnotationHashMap.clear();
-            }
-
-            @Override
-            protected void onMethodExit(int i) {
-                //Log.info("AdviceAdapter onMethodExit");
-                if (mIsAutoInject || mIsInject) {
-                    generateEndCodeWithNoParam(mv, mMethodName);
-                    mIsInject = false;
-                }
-            }
-
-            @Override
-            public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-                //Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
-                if (Type.getDescriptor(TimeCost.class).equals(desc)) {
-                    //Log.info("found TimeCost Annotation");
-                    mIsInject = true;
-                }
-                return new AnnotationMethodsArrayValueScanner();
-            }
-
-        };
+        methodVisitor = new MyAdviceAdapter(Opcodes.ASM5, methodVisitor, access, name, desc);
         return methodVisitor;
     }
 
     /**
-     * setStartTime(String methodName, long exceededTime, boolean monitorOnlyMainThread)
+     * setStartTime(String methodName, long curTime, long curThreadTime)
      *
      * @param mv
      * @param name
-     * @param exceededTime
-     * @param monitorOnlyMainThread
      */
-    private void generateStartCode(MethodVisitor mv, String name, long exceededTime, boolean monitorOnlyMainThread) {
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "com/dryseed/timecost/TimeCostCanary",
-                "get",
-                "()Lcom/dryseed/timecost/TimeCostCanary;",
-                false
-        );
+    private void generateStartCode(MyAdviceAdapter myAdviceAdapter, MethodVisitor mv, String name) {
+        mv.visitMethodInsn(INVOKESTATIC, "java/lang/System", "currentTimeMillis", "()J", false);
+        myAdviceAdapter.startTime = myAdviceAdapter.newLocal(Type.LONG_TYPE);
+        mv.visitVarInsn(LSTORE, myAdviceAdapter.startTime);
+
+        mv.visitMethodInsn(INVOKESTATIC, "android/os/SystemClock", "currentThreadTimeMillis", "()J", false);
+        myAdviceAdapter.startThreadTime = myAdviceAdapter.newLocal(Type.LONG_TYPE);
+        mv.visitVarInsn(LSTORE, myAdviceAdapter.startThreadTime);
+
+        mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/timecost/TimeCostCanary", "get", "()Lcom/dryseed/timecost/TimeCostCanary;", false);
         mv.visitLdcInsn(name);
-        mv.visitLdcInsn(new Long(exceededTime));
-        mv.visitInsn(monitorOnlyMainThread ? ICONST_1 : ICONST_0);
-        mv.visitMethodInsn(
-                INVOKEVIRTUAL,
-                "com/dryseed/timecost/TimeCostCanary",
-                "setStartTime",
-                "(Ljava/lang/String;JZ)V",
-                false
-        );
+        mv.visitVarInsn(LLOAD, myAdviceAdapter.startTime);
+        mv.visitVarInsn(LLOAD, myAdviceAdapter.startThreadTime);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/dryseed/timecost/TimeCostCanary", "setStartTime", "(Ljava/lang/String;JJ)V", false);
     }
 
     /**
@@ -165,22 +100,14 @@ public class MethodFilterClassVisitor extends ClassVisitor {
      * @param mv
      * @param name
      */
-    private void generateEndCodeWithNoParam(MethodVisitor mv, String name) {
-        mv.visitMethodInsn(
-                INVOKESTATIC,
-                "com/dryseed/timecost/TimeCostCanary",
-                "get",
-                "()Lcom/dryseed/timecost/TimeCostCanary;",
-                false
-        );
+    private void generateEndCode(MyAdviceAdapter myAdviceAdapter, MethodVisitor mv, String name, long exceedTime, boolean monitorOnlyMainThread) {
+        mv.visitMethodInsn(INVOKESTATIC, "com/dryseed/timecost/TimeCostCanary", "get", "()Lcom/dryseed/timecost/TimeCostCanary;", false);
         mv.visitLdcInsn(name);
-        mv.visitMethodInsn(
-                INVOKEVIRTUAL,
-                "com/dryseed/timecost/TimeCostCanary",
-                "setEndTime",
-                "(Ljava/lang/String;)V",
-                false
-        );
+        mv.visitVarInsn(LLOAD, myAdviceAdapter.startTime);
+        mv.visitVarInsn(LLOAD, myAdviceAdapter.startThreadTime);
+        mv.visitLdcInsn(new Long(exceedTime));
+        mv.visitInsn(monitorOnlyMainThread ? ICONST_1 : ICONST_0);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/dryseed/timecost/TimeCostCanary", "setEndTime", "(Ljava/lang/String;JJJZ)V", false);
     }
 
     class AnnotationMethodsArrayValueScanner extends AnnotationVisitor {
@@ -195,6 +122,78 @@ public class MethodFilterClassVisitor extends ClassVisitor {
                 mAnnotationHashMap.put(name, value);
                 super.visit(name, value);
             }
+        }
+    }
+
+    class MyAdviceAdapter extends AdviceAdapter {
+        private String name;
+        private String desc;
+        private int startTime;
+        private int startThreadTime;
+
+        protected MyAdviceAdapter(int api, MethodVisitor mv, int access, String name, String desc) {
+            super(api, mv, access, name, desc);
+            this.name = name;
+            this.desc = desc;
+        }
+
+        @Override
+        public void visitCode() {
+            super.visitCode();
+        }
+
+        @Override
+        public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+            super.visitFieldInsn(opcode, owner, name, desc);
+        }
+
+        @Override
+        public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            super.visitMethodInsn(opcode, owner, name, desc, itf);
+        }
+
+        @Override
+        protected void onMethodEnter() {
+            //Log.info("AdviceAdapter onMethodEnter");
+            //统计方法耗时
+            if (mIsAutoInject || mIsInject) {
+                if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_NAME)) {
+                    mMethodName = (String) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_NAME);
+                } else {
+                    mMethodName = mClassName + ":" + name + desc;
+                }
+                generateStartCode(this, mv, mMethodName);
+                //Log.info(String.format("        ===> generate code : %s --- %s", mClassName, mMethodName));
+            }
+        }
+
+        @Override
+        protected void onMethodExit(int i) {
+            //Log.info("AdviceAdapter onMethodExit");
+
+            if (mIsAutoInject || mIsInject) {
+                long exceededTime = 0;
+                boolean monitorOnlyMainThread = false;
+                if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MILLITIME)) {
+                    exceededTime = (long) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MILLITIME);
+                } else if (mAnnotationHashMap.containsKey(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD)) {
+                    monitorOnlyMainThread = (boolean) mAnnotationHashMap.get(Constants.ANNOTATION_COLUMN_MONITOR_ONLY_MAIN_THREAD);
+                }
+
+                generateEndCode(this, mv, mMethodName, exceededTime, monitorOnlyMainThread);
+                mIsInject = false;
+            }
+            mAnnotationHashMap.clear();
+        }
+
+        @Override
+        public org.objectweb.asm.AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+            //Log.info(String.format("AdviceAdapter.visitAnnotation -> desc : %s | visible : %s", desc, visible));
+            if (Type.getDescriptor(TimeCost.class).equals(desc)) {
+                //Log.info("found TimeCost Annotation");
+                mIsInject = true;
+            }
+            return new AnnotationMethodsArrayValueScanner();
         }
     }
 }

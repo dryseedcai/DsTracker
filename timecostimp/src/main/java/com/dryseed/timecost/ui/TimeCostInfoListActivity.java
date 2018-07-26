@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import com.dryseed.timecost.TimeCostCanary;
 import com.dryseed.timecost.TimeCostConfig;
+import com.dryseed.timecost.constants.TimeCostConstant;
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.entity.TimeCostLogInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
@@ -86,11 +87,11 @@ public class TimeCostInfoListActivity extends Activity {
             @Override
             public void onClick(View v) {
                 int sortType = (++mSortTypeIndex) % 3;
-                if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_START_TIME) {
+                if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_START_TIME) {
                     mSortBtn.setText("SORT_START_TIME");
-                } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_TIME_COST) {
+                } else if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_TIME_COST) {
                     mSortBtn.setText("SORT_TIME_COST");
-                } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
+                } else if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
                     mSortBtn.setText("SORT_THREAD_TIME_COST");
                 }
                 TimeCostCanary.get().getConfig().setSortType(sortType);
@@ -159,11 +160,11 @@ public class TimeCostInfoListActivity extends Activity {
                     @Override
                     public int compare(TimeCostInfo lhs, TimeCostInfo rhs) {
                         int sortType = TimeCostCanary.get().getConfig().getSortType();
-                        if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_START_TIME) {
+                        if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_START_TIME) {
                             return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());
-                        } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_TIME_COST) {
+                        } else if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_TIME_COST) {
                             return Long.valueOf(rhs.getTimeCost()).compareTo(lhs.getTimeCost());
-                        } else if (sortType == TimeCostConfig.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
+                        } else if (sortType == TimeCostConstant.CONFIG_SORT_TYPE_THREAD_TIME_COST) {
                             return Long.valueOf(rhs.getThreadTimeCost()).compareTo(lhs.getThreadTimeCost());
                         } else {
                             return Long.valueOf(rhs.getStartMilliTime()).compareTo(lhs.getStartMilliTime());

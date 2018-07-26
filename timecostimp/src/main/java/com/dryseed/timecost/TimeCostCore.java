@@ -1,5 +1,8 @@
 package com.dryseed.timecost;
 
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.text.TextUtils;
 
 import com.dryseed.timecost.annotations.TimeCost;
@@ -9,6 +12,8 @@ import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,30 +36,13 @@ public class TimeCostCore {
      */
     private List<TimeCostInterceptor> mInterceptorChain = new LinkedList<>();
 
-    /**
-     * Save TimeCostInfo during the method invocation
-     */
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap1 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap2 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap3 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap4 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap5 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap6 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap7 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<String, TimeCostInfo> mTimeCostInfoHashMap8 = new ConcurrentHashMap<>();
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<String, TimeCostInfo>> mHashMaps = new ConcurrentHashMap<>();
-    private int mHashMapListSize;
+    //private List<TimeCostInfo> mExceedInfoList = new ArrayList<>();
+
+    //private long mLastNotifyTime = 0;
+
+    //private Handler mHandler = new Handler();
 
     public TimeCostCore() {
-        mHashMaps.put(0, mTimeCostInfoHashMap1);
-        mHashMaps.put(1, mTimeCostInfoHashMap2);
-        mHashMaps.put(2, mTimeCostInfoHashMap3);
-        mHashMaps.put(3, mTimeCostInfoHashMap4);
-        mHashMaps.put(4, mTimeCostInfoHashMap5);
-        mHashMaps.put(5, mTimeCostInfoHashMap6);
-        mHashMaps.put(6, mTimeCostInfoHashMap7);
-        mHashMaps.put(7, mTimeCostInfoHashMap8);
-        mHashMapListSize = 8;
     }
 
     /**
@@ -103,12 +91,28 @@ public class TimeCostCore {
      *
      * @param methodName
      * @param curTime
+     * @param curThreadTime
+     */
+    public void setStartTime(final String methodName, long curTime, long curThreadTime) {
+        if (TextUtils.isEmpty(methodName)) {
+            DebugLog.d(TAG, "methodName is not valid !!!");
+            return;
+        }
+
+        DebugLog.d(String.format("setStartTime [methodName:%s][startTime:%d][startThreadTime:%d]",
+                methodName, curTime, curThreadTime));
+    }
+
+    /**
+     * Set EndTime
+     *
+     * @param methodName
+     * @param startTime
+     * @param startThreadTime
      * @param exceedTime
-     * @param threadExceedTime
      * @param monitorOnlyMainThread
      */
-    public void setStartTime(final String methodName, final long curTime, final long curThreadTime,
-                             final long exceedTime, final long threadExceedTime, final boolean monitorOnlyMainThread) {
+    public void setEndTime(final String methodName, long startTime, long startThreadTime, long exceedTime, boolean monitorOnlyMainThread) {
         if (TextUtils.isEmpty(methodName)) {
             DebugLog.d(TAG, "methodName is not valid !!!");
             return;
@@ -119,35 +123,14 @@ public class TimeCostCore {
             return;
         }
 
-        int index = methodName.length() % mHashMapListSize;
-        TimeCostInfo timeCostInfo = TimeCostInfo.parse(methodName, curTime, curThreadTime, exceedTime, threadExceedTime);
-        DebugLog.d(String.format("=============> 111 [methodName:%s][timeCostInfo:%s][index:%d]", methodName, timeCostInfo.toString(), index));
-        mHashMaps.get(index).put(methodName, timeCostInfo);
-    }
+        long endTime = System.currentTimeMillis();
+        long endThreadTime = SystemClock.currentThreadTimeMillis();
 
-    /**
-     * Set EndTime
-     *
-     * @param methodName
-     * @param time
-     */
-    public void setEndTime(final String methodName, final long time, final long threadTime) {
-        if (TextUtils.isEmpty(methodName)) {
-            DebugLog.d(TAG, "methodName is not valid !!!");
-            return;
-        }
+        DebugLog.d(String.format("setEndTime [methodName:%s][startTime:%d][endTime:%d][startThreadTime:%d][endThreadTime:%d]",
+                methodName, startTime, endTime, startThreadTime, endThreadTime));
 
-        int index = methodName.length() % mHashMapListSize;
-        TimeCostInfo timeCostInfo = mHashMaps.get(index).get(methodName);
-
-        if (null == timeCostInfo) {
-            return;
-        }
-        DebugLog.d(String.format("=============> 222 [methodName:%s][timeCostInfo:%s][index:%d]", methodName, timeCostInfo.toString(), index));
-        timeCostInfo.setEndMilliTime(time);
-        timeCostInfo.setEndThreadMilliTime(threadTime);
+        TimeCostInfo timeCostInfo = TimeCostInfo.parse(methodName, startTime, startThreadTime, endTime, endThreadTime, exceedTime, exceedTime);
         handleCost(timeCostInfo);
-        mHashMaps.get(index).remove(methodName);
     }
 
     /**
@@ -169,21 +152,25 @@ public class TimeCostCore {
                     timeCostInfo.getExceedMilliTime())
             );
 
-            if (!mInterceptorChain.isEmpty()) {
-                for (final TimeCostInterceptor interceptor : mInterceptorChain) {
-                    if (null == TimeCostContext.getContext()) {
-                        return;
-                    }
-                    HandlerThreadUtils.getWriteLogThreadHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            CanaryLogUtils.save(timeCostInfo.formatInfo());
+            //processExceedList(timeCostInfo);
+
+            HandlerThreadUtils.getWriteLogThreadHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    DebugLog.d(TAG, String.format("======> handleCost : [name:%s]", Thread.currentThread().getName()));
+                    CanaryLogUtils.save(timeCostInfo.formatInfo());
+
+                    if (!mInterceptorChain.isEmpty()) {
+                        for (final TimeCostInterceptor interceptor : mInterceptorChain) {
+                            if (null == TimeCostContext.getContext()) {
+                                return;
+                            }
+
                             interceptor.onExceed(TimeCostContext.getContext(), timeCostInfo);
                         }
-                    });
-
+                    }
                 }
-            }
+            });
 
         } else {
             DebugLog.d(TAG, String.format(
@@ -195,6 +182,52 @@ public class TimeCostCore {
             );
         }
     }
+
+    /*private void processExceedList(TimeCostInfo timeCostInfo) {
+        long curTime = System.currentTimeMillis();
+        if (curTime - mLastNotifyTime > TimeCostCanary.get().getConfig().getNotifyInterval()) {
+            mLastNotifyTime = curTime;
+
+            Iterator<TimeCostInfo> iterator = mExceedInfoList.iterator();
+            while (iterator.hasNext()) {
+                final TimeCostInfo info = iterator.next();
+                final boolean hasNext = iterator.hasNext();
+
+                HandlerThreadUtils.getWriteLogThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        DebugLog.d(TAG, String.format("======> handleCost : [name:%s][hasNext:%b]", Thread.currentThread().getName(), hasNext));
+                        CanaryLogUtils.save(info.formatInfo());
+
+                        if (!mInterceptorChain.isEmpty()) {
+                            for (final TimeCostInterceptor interceptor : mInterceptorChain) {
+                                if (null == TimeCostContext.getContext()) {
+                                    return;
+                                }
+
+                                if (!hasNext) {
+                                    interceptor.onExceed(TimeCostContext.getContext(), info);
+                                }
+                            }
+                        }
+                    }
+                });
+
+                iterator.remove();
+            }
+
+        } else {
+            if (null != timeCostInfo) {
+                mExceedInfoList.add(timeCostInfo);
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        processExceedList(null);
+                    }
+                }, TimeCostCanary.get().getConfig().getNotifyInterval());
+            }
+        }
+    }*/
 
     /**
      * Add Interceptor

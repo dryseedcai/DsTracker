@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
+import com.dryseed.timecost.TimeCostCanary;
 import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.utils.DebugLog;
 import com.example.testaar.TestAar;
@@ -17,8 +18,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     @TimeCost(name = "onCreate")
     protected void onCreate(Bundle savedInstanceState) {
+//        super.onCreate(savedInstanceState);
+//        setContentView(R.layout.activity_main);
+
+        long var2 = System.currentTimeMillis();
+        long var4 = SystemClock.currentThreadTimeMillis();
+        TimeCostCanary.get().setStartTime("onCreate", var2, var4);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        this.setContentView(R.layout.activity_main);
+        TimeCostCanary.get().setEndTime("onCreate", var2, var4, 0L, false);
     }
 
     /**
@@ -117,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * 多任务同时进行
+     *
      * @param view
      */
     public void myMethod7(View view) {

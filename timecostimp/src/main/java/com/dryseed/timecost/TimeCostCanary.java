@@ -142,18 +142,15 @@ public class TimeCostCanary {
      * Set StartTime , Called by Asm Code
      *
      * @param methodName
-     * @param exceededTime
-     * @param monitorOnlyMainThread
+     * @param curTime
+     * @param curThreadTime
      */
-    public void setStartTime(String methodName, long exceededTime, boolean monitorOnlyMainThread) {
+    public void setStartTime(String methodName, long curTime, long curThreadTime) {
         if (!sHasInstalled || !mIsRunning) {
             DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
-        long curTime = System.currentTimeMillis();
-        long curThreadTime = SystemClock.currentThreadTimeMillis();
-        DebugLog.d(TAG, String.format("setStartTime : [methodName:%s][curTime:%d][curThreadTime:%d]", methodName, curTime, curThreadTime));
-        mTimeCostCore.setStartTime(methodName, curTime, curThreadTime, exceededTime, exceededTime, monitorOnlyMainThread);
+        mTimeCostCore.setStartTime(methodName, curTime, curThreadTime);
     }
 
     /**
@@ -161,15 +158,12 @@ public class TimeCostCanary {
      *
      * @param methodName
      */
-    public void setEndTime(String methodName) {
+    public void setEndTime(String methodName, long curTime, long curThreadTime, long exceedTime, boolean monitorOnlyMainThread) {
         if (!sHasInstalled || !mIsRunning) {
             DebugLog.d(TAG, String.format("setEndTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
-        long curTime = System.currentTimeMillis();
-        long curThreadTime = SystemClock.currentThreadTimeMillis();
-        DebugLog.d(TAG, String.format("setEndTime : [methodName:%s][curTime:%d][curThreadTime:%d]", methodName, curTime, curThreadTime));
-        mTimeCostCore.setEndTime(methodName, curTime, curThreadTime);
+        mTimeCostCore.setEndTime(methodName, curTime, curThreadTime, exceedTime, monitorOnlyMainThread);
     }
 
     // these lines are originally copied from LeakCanary: Copyright (C) 2015 Square, Inc.
