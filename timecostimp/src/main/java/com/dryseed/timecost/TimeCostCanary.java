@@ -147,7 +147,7 @@ public class TimeCostCanary {
      */
     public void setStartTime(String methodName, long curTime, long curThreadTime) {
         if (!sHasInstalled || !mIsRunning) {
-            DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
+            //DebugLog.d(TAG, String.format("setStartTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         mTimeCostCore.setStartTime(methodName, curTime, curThreadTime);
@@ -160,7 +160,7 @@ public class TimeCostCanary {
      */
     public void setEndTime(String methodName, long curTime, long curThreadTime, long exceedTime, boolean monitorOnlyMainThread) {
         if (!sHasInstalled || !mIsRunning) {
-            DebugLog.d(TAG, String.format("setEndTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
+            //DebugLog.d(TAG, String.format("setEndTime return -- sHasInstalled : %b | mIsRunning : %b", sHasInstalled, mIsRunning));
             return;
         }
         mTimeCostCore.setEndTime(methodName, curTime, curThreadTime, exceedTime, monitorOnlyMainThread);

@@ -46,7 +46,7 @@ public class CanaryLogUtils {
             File file = detectedLogDirectory();
             long time = System.currentTimeMillis();
             path = String.format("%s/%s-%s.log", file.getAbsolutePath(), logFileName, FILE_NAME_FORMATTER.format(time));
-            DebugLog.d(TAG, "path : " + path);
+            //DebugLog.d(TAG, "path : " + path);
             OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(path, true), "UTF-8");
 
             writer = new BufferedWriter(out);
@@ -80,9 +80,9 @@ public class CanaryLogUtils {
 
     private static String getPath() {
         // Log : /storage/emulated/0
-        DebugLog.d(TAG, String.format("Environment.getExternalStorageDirectory() : %s", Environment.getExternalStorageDirectory()));
+        //DebugLog.d(TAG, String.format("Environment.getExternalStorageDirectory() : %s", Environment.getExternalStorageDirectory()));
         // Log : /data/data/com.dryseed.timecost/files
-        DebugLog.d(TAG, String.format("TimeCostContext.getContext().getFilesDir() : %s", TimeCostContext.getContext().getFilesDir()));
+        //DebugLog.d(TAG, String.format("TimeCostContext.getContext().getFilesDir() : %s", TimeCostContext.getContext().getFilesDir()));
 
         String state = Environment.getExternalStorageState();
         // Log : /storage/emulated/0/timecostcanary/
@@ -96,7 +96,7 @@ public class CanaryLogUtils {
     }
 
     private static File detectedLogDirectory() {
-        DebugLog.d(TAG, "getPath : " + getPath());
+        //DebugLog.d(TAG, "getPath : " + getPath());
         File directory = new File(getPath());
         if (!directory.exists()) {
             directory.mkdirs();

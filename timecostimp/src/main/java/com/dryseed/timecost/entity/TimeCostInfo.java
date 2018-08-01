@@ -50,9 +50,19 @@ public class TimeCostInfo {
     protected long mExceedMilliTime = 0;
 
     /**
-     * Thread Exceed Time
+     * Exceed Max Time
+     */
+    protected long mExceedMaxMilliTime = 0;
+
+    /**
+     * Exceed Thread Time
      */
     protected long mExceedThreadMilliTime = 0;
+
+    /**
+     * Exceed Max Thread Time
+     */
+    protected long mExceedMaxThreadMilliTIme = 0;
 
     /**
      * Cost Time
@@ -76,6 +86,8 @@ public class TimeCostInfo {
         this.mEndThreadMilliTime = endThreadMilliTime;
         this.mExceedMilliTime = exceedMilliTime <= 0 ? TimeCostCanary.get().getConfig().getExceedMilliTime() : exceedMilliTime;
         this.mExceedThreadMilliTime = exceedThreadMilliTime <= 0 ? TimeCostCanary.get().getConfig().getExceedMilliTime() : exceedThreadMilliTime;
+        this.mExceedMaxMilliTime = TimeCostCanary.get().getConfig().getExceedMaxMilliTIme();
+        this.mExceedMaxThreadMilliTIme = TimeCostCanary.get().getConfig().getExceedMaxMilliTIme();
         this.mTimeCost = mEndMilliTime - mStartMilliTime;
         this.mThreadTimeCost = mEndThreadMilliTime - mStartThreadMilliTime;
     }
@@ -165,7 +177,8 @@ public class TimeCostInfo {
     }
 
     public boolean isExceed() {
-        return mTimeCost > mExceedMilliTime && mThreadTimeCost > mExceedThreadMilliTime;
+        return mTimeCost > mExceedMilliTime && mThreadTimeCost > mExceedThreadMilliTime
+                && mTimeCost <= mExceedMaxMilliTime && mTimeCost <= mExceedMaxThreadMilliTIme;
     }
 
     @Override

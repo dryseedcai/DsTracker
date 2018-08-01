@@ -1,24 +1,16 @@
 package com.dryseed.timecost;
 
-import android.os.Handler;
-import android.os.Message;
 import android.os.SystemClock;
 import android.text.TextUtils;
 
-import com.dryseed.timecost.annotations.TimeCost;
 import com.dryseed.timecost.entity.TimeCostInfo;
 import com.dryseed.timecost.utils.CanaryLogUtils;
 import com.dryseed.timecost.utils.DebugLog;
 import com.dryseed.timecost.utils.HandlerThreadUtils;
 import com.dryseed.timecost.utils.ThreadUtils;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author caiminming
@@ -95,12 +87,12 @@ public class TimeCostCore {
      */
     public void setStartTime(final String methodName, long curTime, long curThreadTime) {
         if (TextUtils.isEmpty(methodName)) {
-            DebugLog.d(TAG, "methodName is not valid !!!");
+            //DebugLog.d(TAG, "methodName is not valid !!!");
             return;
         }
 
-        DebugLog.d(String.format("setStartTime [methodName:%s][startTime:%d][startThreadTime:%d]",
-                methodName, curTime, curThreadTime));
+        //DebugLog.d(String.format("setStartTime [methodName:%s][startTime:%d][startThreadTime:%d]",
+        //        methodName, curTime, curThreadTime));
     }
 
     /**
@@ -114,23 +106,26 @@ public class TimeCostCore {
      */
     public void setEndTime(final String methodName, long startTime, long startThreadTime, long exceedTime, boolean monitorOnlyMainThread) {
         if (TextUtils.isEmpty(methodName)) {
-            DebugLog.d(TAG, "methodName is not valid !!!");
+            //DebugLog.d(TAG, "methodName is not valid !!!");
             return;
         }
 
         if (!checkThread(monitorOnlyMainThread)) {
-            DebugLog.d(TAG, "thread is not valid !!!");
+            //DebugLog.d(TAG, "thread is not valid !!!");
             return;
         }
 
         long endTime = System.currentTimeMillis();
         long endThreadTime = SystemClock.currentThreadTimeMillis();
 
-        DebugLog.d(String.format("setEndTime [methodName:%s][startTime:%d][endTime:%d][startThreadTime:%d][endThreadTime:%d]",
-                methodName, startTime, endTime, startThreadTime, endThreadTime));
+        //DebugLog.d(String.format("setEndTime [methodName:%s][startTime:%d][endTime:%d][startThreadTime:%d][endThreadTime:%d]",
+        //        methodName, startTime, endTime, startThreadTime, endThreadTime));
 
         TimeCostInfo timeCostInfo = TimeCostInfo.parse(methodName, startTime, startThreadTime, endTime, endThreadTime, exceedTime, exceedTime);
         handleCost(timeCostInfo);
+
+        //DebugLog.d(String.format("<<<<<<<<<<<<< TimeCost spend [time:%d][threadTime:%d]",
+        //        System.currentTimeMillis() - endTime, SystemClock.currentThreadTimeMillis() - endThreadTime));
     }
 
     /**
@@ -145,7 +140,7 @@ public class TimeCostCore {
 
         if (timeCostInfo.isExceed()) {
             DebugLog.w(TAG, String.format(
-                    "%s has exceed time. [TimeCost:%d][ThreadTimeCost:%d][ExceededTime:%d]",
+                    "%s has exceed time. \n==========================================================> [TimeCost:%d][ThreadTimeCost:%d][ExceededTime:%d]",
                     timeCostInfo.getName(),
                     timeCostInfo.getTimeCost(),
                     timeCostInfo.getThreadTimeCost(),
@@ -157,7 +152,7 @@ public class TimeCostCore {
             HandlerThreadUtils.getWriteLogThreadHandler().post(new Runnable() {
                 @Override
                 public void run() {
-                    DebugLog.d(TAG, String.format("======> handleCost : [name:%s]", Thread.currentThread().getName()));
+                    //DebugLog.d(TAG, String.format("======> handleCost : [name:%s]", Thread.currentThread().getName()));
                     CanaryLogUtils.save(timeCostInfo.formatInfo());
 
                     if (!mInterceptorChain.isEmpty()) {
@@ -173,13 +168,13 @@ public class TimeCostCore {
             });
 
         } else {
-            DebugLog.d(TAG, String.format(
+            /*DebugLog.d(TAG, String.format(
                     "[TimeCost:%d][ThreadTimeCost:%d][ExceededTime:%d] . %s has not exceed time. ",
                     timeCostInfo.getTimeCost(),
                     timeCostInfo.getThreadTimeCost(),
                     timeCostInfo.getExceedMilliTime(),
                     timeCostInfo.getName())
-            );
+            );*/
         }
     }
 

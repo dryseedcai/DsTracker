@@ -37,7 +37,7 @@ dependencies {
 
 //group和version
 group='com.dryseed.timecost'
-version='1.0.14'
+version='1.0.26'
 
 //打包到本地或者远程Maven库
 uploadArchives {

@@ -9,6 +9,7 @@
 * 注入jar包开关 Completed
 * 上传maven Completed
 * 耗时统计优化（setStartTime/setEndTime）Completed
+* 耗时区间配置
 * 统计时间设定
 * json导入插桩配置
 * 生成可视化报告

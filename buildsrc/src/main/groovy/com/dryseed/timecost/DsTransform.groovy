@@ -247,7 +247,7 @@ class DsTransform extends Transform {
             //插桩class
             if (shouldModifyClassInJar(entryName)) {
                 // log : entryName : com/dryseed/timecost/TimeCostCanary.class
-                String simpleEntryName = entryName.replace("/", ".").replace(".class", "")
+                String simpleEntryName = entryName.replace(File.separator, ".").replace(".class", "")
                 if (shouldModifyClass(simpleEntryName)) {
                     //class文件处理
                     Log.info("  ===> modifyJarClass : ${simpleEntryName}")

@@ -11,6 +11,8 @@ public class TimeCostConfig {
 
     private long mExceedMilliTime;
 
+    private long mExceedMaxMilliTIme;
+
     private long mThreadExceedMilliTime;
 
     private boolean mMonitorAllThread;
@@ -24,6 +26,14 @@ public class TimeCostConfig {
     private int mSortType;
 
     private long mNotifyInterval;
+
+    public long getExceedMaxMilliTIme() {
+        return mExceedMaxMilliTIme;
+    }
+
+    public void setExceedMaxMilliTIme(long exceedMaxMilliTIme) {
+        mExceedMaxMilliTIme = exceedMaxMilliTIme;
+    }
 
     public long getNotifyInterval() {
         return mNotifyInterval;
@@ -90,9 +100,11 @@ public class TimeCostConfig {
     }
 
     public static class Builder {
-        private long exceedMilliTime = TimeCostConstant.TIME_COST_DEFAULT_EXCEED_TIME;
+        private long mExceedMilliTime = TimeCostConstant.TIME_COST_DEFAULT_EXCEED_TIME;
 
-        private long threadExceedMilliTime = TimeCostConstant.TIME_COST_DEFAULT_THREAD_EXCEED_TIME;
+        private long mExceedMaxMilliTIme = Integer.MAX_VALUE;
+
+        private long mThreadExceedMilliTime = TimeCostConstant.TIME_COST_DEFAULT_THREAD_EXCEED_TIME;
 
         private boolean mMonitorAllThread = true;
 
@@ -105,6 +117,11 @@ public class TimeCostConfig {
         private String mLogPath = TimeCostConstant.TIME_COST_DEFAULT_LOG_DIR;
 
         private long mNotifyInterval = TimeCostConstant.TIME_COST_NOTIFY_INTERVAL;
+
+        public Builder setExceedMaxMilliTIme(long exceedMaxMilliTIme) {
+            this.mExceedMaxMilliTIme = exceedMaxMilliTIme;
+            return this;
+        }
 
         public Builder setNotifyInterval(long notifyInterval) {
             mNotifyInterval = notifyInterval;
@@ -122,12 +139,12 @@ public class TimeCostConfig {
         }
 
         public Builder setExceedMilliTime(long exceedMilliTime) {
-            this.exceedMilliTime = exceedMilliTime;
+            this.mExceedMilliTime = exceedMilliTime;
             return this;
         }
 
         public Builder setThreadExceedMilliTime(long exceedMilliTime) {
-            this.threadExceedMilliTime = exceedMilliTime;
+            this.mThreadExceedMilliTime = exceedMilliTime;
             return this;
         }
 
@@ -159,8 +176,9 @@ public class TimeCostConfig {
 
         private TimeCostConfig create() {
             TimeCostConfig config = new TimeCostConfig();
-            config.mExceedMilliTime = this.exceedMilliTime;
-            config.mThreadExceedMilliTime = this.threadExceedMilliTime;
+            config.mExceedMilliTime = this.mExceedMilliTime;
+            config.mExceedMaxMilliTIme = this.mExceedMaxMilliTIme;
+            config.mThreadExceedMilliTime = this.mThreadExceedMilliTime;
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
             config.mShowDetailUI = this.mShowDetailUI;
