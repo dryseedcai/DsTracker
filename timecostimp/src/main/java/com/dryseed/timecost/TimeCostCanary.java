@@ -7,6 +7,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import com.dryseed.timecost.ui.TimeCostInfoListActivity;
+import com.dryseed.timecost.utils.CountDownTimer;
 import com.dryseed.timecost.utils.DebugLog;
 
 import java.util.concurrent.Executor;
@@ -50,7 +51,12 @@ public class TimeCostCanary {
     /**
      * Flag whether TimeCostCanary is running
      */
-    private boolean mIsRunning = true;
+    private boolean mIsRunning = false;
+
+    /**
+     * Timer for delayed start
+     */
+    private CountDownTimer mCountDownTimer;
 
 
     /**
@@ -116,6 +122,13 @@ public class TimeCostCanary {
         if (timeCostConfig.isShowDetailUI() != mTimeCostConfig.isShowDetailUI()) {
             setShowDetailUIEnable(sApplicationContext, TimeCostInfoListActivity.class, timeCostConfig.isShowDetailUI());
         }
+
+        if (timeCostConfig.getDelayStartMilliTime() <= 0) {
+            mIsRunning = true;
+        } else {
+            startCountDownTimer(timeCostConfig.getDelayStartMilliTime());
+        }
+
         mTimeCostConfig = timeCostConfig;
         return this;
     }
@@ -164,6 +177,27 @@ public class TimeCostCanary {
             return;
         }
         mTimeCostCore.setEndTime(methodName, curTime, curThreadTime, exceedTime, monitorOnlyMainThread);
+    }
+
+    /**
+     * Start CountDown
+     *
+     * @param delay
+     */
+    private void startCountDownTimer(long delay) {
+        if (null == mCountDownTimer) {
+            mCountDownTimer = new CountDownTimer(delay, delay) {
+                public void onTick(long millisUntilFinished) {
+                }
+
+                public void onFinish() {
+                    mIsRunning = true;
+                }
+            }.start();
+        } else {
+            mCountDownTimer.cancel();
+            mCountDownTimer.start();
+        }
     }
 
     // these lines are originally copied from LeakCanary: Copyright (C) 2015 Square, Inc.

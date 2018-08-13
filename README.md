@@ -9,11 +9,12 @@
 * 注入jar包开关 Completed
 * 上传maven Completed
 * 耗时统计优化（setStartTime/setEndTime）Completed
-* 耗时区间配置
+* 耗时区间配置 Completed
+* gradle plugin 插件优化 Completed
+* 延时启动统计功能
 * 统计时间设定
 * json导入插桩配置
 * 生成可视化报告
-* gradle plugin 插件优化
 * 结合BlockCanary
 
 
@@ -44,6 +45,7 @@
         }
     }
     ```
+
     * app/build.gradle 中引入
     ```
      apply plugin: 'com.dryseed.timecost.gradle.dsplugin'
@@ -75,6 +77,7 @@
          }
      }
     ```
+
     * Application 中初始化TimeCost
     ```
     TimeCostCanary.install(getApplication()).config(

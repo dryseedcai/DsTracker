@@ -33,18 +33,20 @@ final class NotificationService implements TimeCostInterceptor {
 
     @Override
     public void onExceed(Context context, TimeCostInfo timeCostInfo) {
-        DebugLog.d(TAG, "onExceed : " + timeCostInfo);
-        Intent intent = new Intent(context, TimeCostInfoListActivity.class);
-        //intent.putExtra("show_latest", blockInfo.timeStart);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent, FLAG_UPDATE_CURRENT);
-        String contentTitle = context.getString(
-                R.string.time_cost_canary_class_has_blocked,
-                timeCostInfo.getTimeCost(),
-                timeCostInfo.getExceedMilliTime()
-        );
-        String contentText = timeCostInfo.getName();//context.getString(R.string.time_cost_canary_notification_message);
-        show(context, contentTitle, contentText, pendingIntent);
+        if (TimeCostCanary.get().getConfig().isShowDetailUI()) {
+            DebugLog.d(TAG, "onExceed : " + timeCostInfo);
+            Intent intent = new Intent(context, TimeCostInfoListActivity.class);
+            //intent.putExtra("show_latest", blockInfo.timeStart);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 1, intent, FLAG_UPDATE_CURRENT);
+            String contentTitle = context.getString(
+                    R.string.time_cost_canary_class_has_blocked,
+                    timeCostInfo.getTimeCost(),
+                    timeCostInfo.getExceedMilliTime()
+            );
+            String contentText = timeCostInfo.getName();//context.getString(R.string.time_cost_canary_notification_message);
+            show(context, contentTitle, contentText, pendingIntent);
+        }
     }
 
     @TargetApi(HONEYCOMB)

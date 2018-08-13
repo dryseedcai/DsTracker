@@ -139,6 +139,10 @@ class DsTransform extends Transform {
         File transformsDir = new File(project.getBuildDir().absolutePath + "${I}intermediates${I}transforms${I}${TRANSFORM_NAME}")
         FileUtils.deleteDirectory(transformsDir)
 
+        if (!isIncremental) {
+            outputProvider.deleteAll()
+        }
+
         /**
          * 获取所有依赖的classPaths
          */

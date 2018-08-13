@@ -27,6 +27,16 @@ public class TimeCostConfig {
 
     private long mNotifyInterval;
 
+    private long mDelayStartMilliTime;
+
+    public long getDelayStartMilliTime() {
+        return mDelayStartMilliTime;
+    }
+
+    public void setDelayStartMilliTime(long delayStartMilliTime) {
+        mDelayStartMilliTime = delayStartMilliTime;
+    }
+
     public long getExceedMaxMilliTIme() {
         return mExceedMaxMilliTIme;
     }
@@ -118,8 +128,15 @@ public class TimeCostConfig {
 
         private long mNotifyInterval = TimeCostConstant.TIME_COST_NOTIFY_INTERVAL;
 
+        private long mDelayStartMilliTime = 0;
+
+        public Builder setDelayStartMilliTime(long delayStartMilliTime) {
+            mDelayStartMilliTime = delayStartMilliTime;
+            return this;
+        }
+
         public Builder setExceedMaxMilliTIme(long exceedMaxMilliTIme) {
-            this.mExceedMaxMilliTIme = exceedMaxMilliTIme;
+            mExceedMaxMilliTIme = exceedMaxMilliTIme;
             return this;
         }
 
@@ -185,6 +202,7 @@ public class TimeCostConfig {
             config.mLogPath = this.mLogPath;
             config.mSortType = this.mSortType;
             config.mNotifyInterval = this.mNotifyInterval;
+            config.mDelayStartMilliTime = this.mDelayStartMilliTime;
             return config;
         }
     }
