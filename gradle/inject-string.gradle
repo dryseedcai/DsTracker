@@ -1,0 +1,62 @@
+import org.codehaus.groovy.runtime.InvokerHelper
+
+static def safeGetProperties(Closure... closures) {
+    def property = null
+    for (Closure closure : closures) {
+        try {
+            property = closure.call()
+        } catch (Exception ignored) {
+        }
+        if (property != null) {
+            break
+        }
+    }
+    property
+}
+
+static def tryGetPropertiesFromProject(Project project, String propertyName) {
+    def result = project.findProperty(propertyName)
+    if (result != null) {
+        return result
+    }
+    null
+}
+
+static def tryGetProperties(def env, String propertyName) {
+    safeGetProperties(
+            {
+                if (env instanceof Project) {
+                    def result = tryGetPropertiesFromProject(env, propertyName)
+                    if (result != null) {
+                        return result
+                    }
+                }
+                null
+            },
+            { InvokerHelper.getProperty(env, propertyName) }
+    )
+}
+
+static def getExtraProperty(def object, String propertyName) {
+    if (object != null && object.ext != null && object.ext.has(propertyName)) {
+        return object.ext.get(propertyName)
+    }
+    return null
+}
+
+// 注入String 使得可以直接调用'platform'.prop()获取参数
+String.metaClass.prop = { env = '', fallback = null ->
+    String propertyName = delegate
+    def result = safeGetProperties(
+            { tryGetProperties(env, propertyName) },
+            { settings?.gradle?.startParameter?.projectProperties?.get(propertyName) },
+            { System.getenv().get(propertyName) },
+            { System.properties.getProperty(propertyName) },
+            { getExtraProperty(settings, propertyName) },
+            { getExtraProperty(settings?.gradle, propertyName) }
+    )
+    if (result != null) {
+        return result
+    }
+    fallback
+}

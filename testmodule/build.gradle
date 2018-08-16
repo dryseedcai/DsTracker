@@ -32,5 +32,12 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    compile project(':timecostimp')
+    //TimeCost
+    if ("timecost_enable".prop(project) == 'true') {
+        //implementation 'com.dryseed.timecost:timecostimp:1.+'
+        compile project(':timecostimp')
+    } else {
+        //implementation 'com.dryseed.timecost:timecostimp-no-op:1.+'
+        compile project(':timecostimp-no-op')
+    }
 }

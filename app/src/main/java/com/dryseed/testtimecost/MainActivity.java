@@ -4,11 +4,11 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.dryseed.timecost.TimeCostCanary;
 import com.dryseed.timecost.annotations.TimeCost;
-import com.dryseed.timecost.utils.DebugLog;
 import com.example.testaar.TestAar;
 import com.example.testlibrary.TestLibrary;
 import com.example.testmodule.TestModule;
@@ -110,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
     public void myMethod6(View view) {
         long timeStart = System.currentTimeMillis();
         long threadTimeStart = SystemClock.currentThreadTimeMillis();
-        DebugLog.d("MMM", String.format("myMehtod8 Time : %d | ThreadTime : %d", timeStart, threadTimeStart));
+        Log.d("MMM", String.format("myMehtod8 Time : %d | ThreadTime : %d", timeStart, threadTimeStart));
 
         new SomeTest().someM();
 
-        DebugLog.d("MMM", String.format("TimeInterval : %d | ThreadTimeInterval : %d", System.currentTimeMillis() - timeStart, SystemClock.currentThreadTimeMillis() - threadTimeStart));
+        Log.d("MMM", String.format("TimeInterval : %d | ThreadTimeInterval : %d", System.currentTimeMillis() - timeStart, SystemClock.currentThreadTimeMillis() - threadTimeStart));
 
         /**
          * log:

@@ -106,17 +106,20 @@ public class TimeCostCanary {
      *
      * @param methodName
      * @param curTime
-     * @param exceededTime
+     * @param curThreadTime
      */
-    public void setStartTime(String methodName, long curTime, long exceededTime, boolean monitorOnlyMainThread) {
+    public void setStartTime(String methodName, long curTime, long curThreadTime) {
     }
 
     /**
      * Set EndTime , Called by Asm Code
      *
      * @param methodName
-     * @param time
+     * @param curTime
+     * @param curThreadTime
+     * @param exceedTime
+     * @param monitorOnlyMainThread
      */
-    public void setEndTime(String methodName, long time) {
+    public void setEndTime(String methodName, long curTime, long curThreadTime, long exceedTime, boolean monitorOnlyMainThread) {
     }
 }

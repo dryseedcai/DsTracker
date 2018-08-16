@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.dryseed.timecost.gradle.dsplugin'
+
+//TimeCost linked{project/build.gradle classpath "com.dryseed.timecost.gradle:buildsrc:1.+"}
+if ("timecost_enable".prop(project) == 'true') {
+    apply plugin: 'com.dryseed.timecost.gradle.dsplugin'
+}
 
 repositories {
     //在libs目录下能找到aar文件
@@ -47,8 +51,14 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:1.0.2'
     androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    debugCompile project(':timecostimp')
-    //releaseCompile project(':timecostimp-no-op')
+    //TimeCost
+    if ("timecost_enable".prop(project) == 'true') {
+        //implementation 'com.dryseed.timecost:timecostimp:1.+'
+        compile project(':timecostimp')
+    } else {
+        //implementation 'com.dryseed.timecost:timecostimp-no-op:1.+'
+        compile project(':timecostimp-no-op')
+    }
 
     //compile project(':testlibrary')
     compile(name: 'testaar', ext: 'aar')
@@ -56,30 +66,34 @@ dependencies {
     compile project(':testmodule')
 }
 
-timeCostConfig {
-    // this flag will decide whether the log of the time-cost plugin be printed or not, default value is true
-    isDebug = true
-    // this is a kit feature of the plugin, set it true to see the time consume of this build
-    watchTaskTimeCost = true
-    // the plugin will only inject package / class defined in whitePackageList
-    whitePackageList = [
-            'com.dryseed.testtimecost', 'com.dryseed.testwhitelist',
-            'com.example.testaar', 'com.example.testlibrary',
-            'com.example.testmodule'
-    ]
-    // the plugin will not inject package, white list has a higher priority than white list
-    blackPackageList = []
-    // the plugin will inject automatically based on whitePackageList
-    autoInject = true
-    // this flag will decide whether the plugin will inject the jars, false by default
-    jarInject = true
-    scope {
-        project true //inject app project, default true
-        projectLocalDep false //inject app libs(eg: .jar), default false
-        subProject true //inject subProject of app project(eg: module), default true
-        subProjectLocalDep false //inject subProject libs, default false
-        externalLibraries false //inject external libs(eg: .aar), default false
+//TimeCost
+if ("timecost_enable".prop(project) == 'true') {
+    timeCostConfig {
+        // this flag will decide whether the log of the time-cost plugin be printed or not, default value is true
+        isDebug = true
+        // this is a kit feature of the plugin, set it true to see the time consume of this build
+        watchTaskTimeCost = true
+        // the plugin will only inject package / class defined in whitePackageList
+        whitePackageList = [
+                'com.dryseed.testtimecost', 'com.dryseed.testwhitelist',
+                'com.example.testaar', 'com.example.testlibrary',
+                'com.example.testmodule'
+        ]
+        // the plugin will not inject package, white list has a higher priority than white list
+        blackPackageList = []
+        // the plugin will inject automatically based on whitePackageList
+        autoInject = true
+        // this flag will decide whether the plugin will inject the jars, false by default
+        jarInject = true
+        scope {
+            project true //inject app project, default true
+            projectLocalDep false //inject app libs(eg: .jar), default false
+            subProject true //inject subProject of app project(eg: module), default true
+            subProjectLocalDep false //inject subProject libs, default false
+            externalLibraries false //inject external libs(eg: .aar), default false
+        }
     }
 }
+
 
 

@@ -7,14 +7,84 @@ public class TimeCostConfig {
     private TimeCostConfig() {
     }
 
-    private long mMilliExceedTime;
+    private long mExceedMilliTime;
+
+    private long mExceedMaxMilliTIme;
+
+    private long mThreadExceedMilliTime;
 
     private boolean mMonitorAllThread;
 
     private boolean mMonitorOnlyMainThread;
 
-    public void setMilliExceedTime(long milliExceedTime) {
-        mMilliExceedTime = milliExceedTime;
+    private boolean mShowDetailUI;
+
+    private String mLogPath;
+
+    private int mSortType;
+
+    private long mNotifyInterval;
+
+    private long mDelayStartMilliTime;
+
+    public long getDelayStartMilliTime() {
+        return mDelayStartMilliTime;
+    }
+
+    public void setDelayStartMilliTime(long delayStartMilliTime) {
+        mDelayStartMilliTime = delayStartMilliTime;
+    }
+
+    public long getExceedMaxMilliTIme() {
+        return mExceedMaxMilliTIme;
+    }
+
+    public void setExceedMaxMilliTIme(long exceedMaxMilliTIme) {
+        mExceedMaxMilliTIme = exceedMaxMilliTIme;
+    }
+
+    public long getNotifyInterval() {
+        return mNotifyInterval;
+    }
+
+    public void setNotifyInterval(long notifyInterval) {
+        mNotifyInterval = notifyInterval;
+    }
+
+    public long getThreadExceedMilliTime() {
+        return mThreadExceedMilliTime;
+    }
+
+    public void setThreadExceedMilliTime(long threadExceedMilliTime) {
+        mThreadExceedMilliTime = threadExceedMilliTime;
+    }
+
+    public int getSortType() {
+        return mSortType;
+    }
+
+    public void setSortType(int sortType) {
+        mSortType = sortType;
+    }
+
+    public boolean isShowDetailUI() {
+        return mShowDetailUI;
+    }
+
+    public void setShowDetailUI(boolean showDetailUI) {
+        mShowDetailUI = showDetailUI;
+    }
+
+    public String getLogPath() {
+        return mLogPath == null ? "" : mLogPath;
+    }
+
+    public void setLogPath(String logPath) {
+        mLogPath = logPath;
+    }
+
+    public void setExceedMilliTime(long exceedMilliTime) {
+        mExceedMilliTime = exceedMilliTime;
     }
 
     public boolean isMonitorAllThread() {
@@ -33,19 +103,63 @@ public class TimeCostConfig {
         mMonitorOnlyMainThread = monitorOnlyMainThread;
     }
 
-    public long getMilliExceedTime() {
-        return mMilliExceedTime;
+    public long getExceedMilliTime() {
+        return mExceedMilliTime;
     }
 
     public static class Builder {
-        private long milliExceedTime = Integer.MAX_VALUE;
+        private long mExceedMilliTime = 0;
+
+        private long mExceedMaxMilliTIme = Integer.MAX_VALUE;
+
+        private long mThreadExceedMilliTime = 0;
 
         private boolean mMonitorAllThread = true;
 
         private boolean mMonitorOnlyMainThread = false;
 
-        public Builder setMilliExceedTime(long milliExceedTime) {
-            this.milliExceedTime = milliExceedTime;
+        private boolean mShowDetailUI = true;
+
+        private int mSortType = 0;
+
+        private String mLogPath = "";
+
+        private long mNotifyInterval = 0;
+
+        private long mDelayStartMilliTime = 0;
+
+        public Builder setDelayStartMilliTime(long delayStartMilliTime) {
+            mDelayStartMilliTime = delayStartMilliTime;
+            return this;
+        }
+
+        public Builder setExceedMaxMilliTIme(long exceedMaxMilliTIme) {
+            mExceedMaxMilliTIme = exceedMaxMilliTIme;
+            return this;
+        }
+
+        public Builder setNotifyInterval(long notifyInterval) {
+            mNotifyInterval = notifyInterval;
+            return this;
+        }
+
+        public Builder setSortType(int sortType) {
+            mSortType = sortType;
+            return this;
+        }
+
+        public Builder setShowDetailUI(boolean showDetailUI) {
+            mShowDetailUI = showDetailUI;
+            return this;
+        }
+
+        public Builder setExceedMilliTime(long exceedMilliTime) {
+            this.mExceedMilliTime = exceedMilliTime;
+            return this;
+        }
+
+        public Builder setThreadExceedMilliTime(long exceedMilliTime) {
+            this.mThreadExceedMilliTime = exceedMilliTime;
             return this;
         }
 
@@ -65,6 +179,11 @@ public class TimeCostConfig {
             return this;
         }
 
+        public Builder setLogPath(String logPath) {
+            this.mLogPath = logPath;
+            return this;
+        }
+
         public TimeCostConfig build() {
             final TimeCostConfig config = create();
             return config;
@@ -72,9 +191,16 @@ public class TimeCostConfig {
 
         private TimeCostConfig create() {
             TimeCostConfig config = new TimeCostConfig();
-            config.mMilliExceedTime = this.milliExceedTime;
+            config.mExceedMilliTime = this.mExceedMilliTime;
+            config.mExceedMaxMilliTIme = this.mExceedMaxMilliTIme;
+            config.mThreadExceedMilliTime = this.mThreadExceedMilliTime;
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
+            config.mShowDetailUI = this.mShowDetailUI;
+            config.mLogPath = this.mLogPath;
+            config.mSortType = this.mSortType;
+            config.mNotifyInterval = this.mNotifyInterval;
+            config.mDelayStartMilliTime = this.mDelayStartMilliTime;
             return config;
         }
     }

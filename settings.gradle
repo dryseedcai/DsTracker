@@ -1,1 +1,8 @@
-include ':app', ':buildsrc', ':timecostimp', ':testmodule'/*, ':timecostimp-no-op'*//*, ':testaar'*//*, ':testlibrary'*//*, ':gradle-plugin'*/
+include ':timecostimp-no-op'
+include ':buildsrc'
+include ':timecostimp'
+include ':testmodule'
+include ':app' /*, ':testaar'*//*, ':testlibrary'*//*, ':gradle-plugin'*/
+
+
+apply from: "$rootDir/gradle/inject-string.gradle"
