@@ -3,14 +3,12 @@
 buildscript {
     
     repositories {
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
         jcenter()
+        google()
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.android.tools.build:gradle:3.1.3'
 
         //TimeCost Gradle Plugin
         /*if("timecost_enable".prop(project) == 'true'){
@@ -24,11 +22,9 @@ buildscript {
 
 allprojects {
     repositories {
-        maven {
-            url 'https://maven.google.com/'
-            name 'Google'
-        }
         jcenter()
+        google()
+        mavenCentral()
     }
 }
 

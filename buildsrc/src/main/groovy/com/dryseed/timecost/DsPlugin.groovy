@@ -4,7 +4,7 @@ import com.android.build.api.transform.QualifiedContent
 import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryPlugin
-import com.android.builder.Version
+import com.android.builder.model.Version
 import com.dryseed.timecost.utils.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project

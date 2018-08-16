@@ -6,15 +6,15 @@ dependencies {
     compile gradleApi()
     //groovy sdk
     compile localGroovy()
-
-    compile 'com.android.tools.build:gradle:2.2.2'
-
+    compile "com.android.tools.build:gradle:3.1.2"
+//    compile 'com.android.tools.build:gradle:2.2.2'
     compile 'javassist:javassist:3.12.1.GA'
 }
 
 repositories {
     jcenter()
     mavenCentral()
+    google()
 }
 
 //group和version
