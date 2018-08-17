@@ -21,7 +21,7 @@ public class MyApplication extends Application {
                         .setMonitorOnlyMainThread(true)
                         .setSortType(TimeCostConstant.CONFIG_SORT_TYPE_START_TIME)
                         .setShowDetailUI(true)
-                        .setDelayStartMilliTime(20000L)
+                        //.setDelayStartMilliTime(20000L)
                         .build()
         );
 

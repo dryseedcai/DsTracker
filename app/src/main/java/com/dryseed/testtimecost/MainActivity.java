@@ -37,11 +37,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @TimeCost(name = "myMethod", milliTime = 500L)
     public void myMethod(View view) {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        new SomeTest().someM();
     }
 
     /**
