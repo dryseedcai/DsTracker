@@ -25,9 +25,17 @@ repositories {
     google()
 }
 
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+tasks.withType(GroovyCompile) {
+    groovyOptions.encoding = "MacRoman"
+}
+
 //group和version
-group='com.dryseed.timecost.gradle'
-version='1.0.7'
+group = 'com.dryseed.timecost.gradle'
+version = '1.0.7'
 
 //打包到本地或者远程Maven库
 uploadArchives {
@@ -43,10 +51,8 @@ uploadArchives {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-}
 
-tasks.withType(GroovyCompile) {
-    groovyOptions.encoding = "MacRoman"
-}
+
+
+
+

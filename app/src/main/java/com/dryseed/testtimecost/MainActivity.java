@@ -1,32 +1,28 @@
 package com.dryseed.testtimecost;
 
+import android.app.Activity;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.dryseed.timecost.TimeCostCanary;
 import com.dryseed.timecost.annotations.TimeCost;
 import com.example.testaar.TestAar;
 import com.example.testlibrary.TestLibrary;
 import com.example.testmodule.TestModule;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     @Override
     @TimeCost(name = "onCreate")
     protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-
-        long var2 = System.currentTimeMillis();
-        long var4 = SystemClock.currentThreadTimeMillis();
-        TimeCostCanary.get().setStartTime("onCreate", var2, var4);
+        //long var2 = System.currentTimeMillis();
+        //long var4 = SystemClock.currentThreadTimeMillis();
+        //TimeCostCanary.get().setStartTime("onCreate", var2, var4);
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_main);
-        TimeCostCanary.get().setEndTime("onCreate", var2, var4, 0L, false);
+        //TimeCostCanary.get().setEndTime("onCreate", var2, var4, 0L, false);
     }
 
     /**

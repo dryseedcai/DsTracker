@@ -5,13 +5,6 @@ if ("timecost_enable".prop(project) == 'true') {
     apply plugin: 'com.dryseed.timecost.gradle.dsplugin'
 }
 
-repositories {
-    //在libs目录下能找到aar文件
-    flatDir {
-        dirs 'libs' //this way we can find the .aar file in libs folder
-    }
-}
-
 android {
     compileSdkVersion 27
     buildToolsVersion '27.0.3'
@@ -31,29 +24,60 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            keyAlias 'ds'
+            keyPassword '123456'
+            storeFile file('ds.jks')
+            storePassword '123456'
+        }
+        debug {
+            keyAlias 'ds'
+            keyPassword '123456'
+            storeFile file('ds.jks')
+            storePassword '123456'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true   // 混淆
+            zipAlignEnabled true // Zipalign优化
+            shrinkResources true // 移除无用的resource
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        debug {
+            minifyEnabled false   // 混淆
+            zipAlignEnabled false // Zipalign优化
+            shrinkResources false // 移除无用的resource
+            signingConfig signingConfigs.debug
+        }
+    }
+
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:27.1.1'
-    compile 'com.android.support.constraint:constraint-layout:1.1.1'
-    testCompile 'junit:junit:4.12'
-    androidTestCompile 'com.android.support.test:runner:1.0.2'
-    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.1'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     //TimeCost
     if ("timecost_enable".prop(project) == 'true') {
         //implementation 'com.dryseed.timecost:timecostimp:1.+'
-        compile project(':timecostimp')
+        implementation project(':timecostimp')
     } else {
         //implementation 'com.dryseed.timecost:timecostimp-no-op:1.+'
-        compile project(':timecostimp-no-op')
+        implementation project(':timecostimp-no-op')
     }
 
     //compile project(':testlibrary')
-    compile(name: 'testaar', ext: 'aar')
+    implementation files('libs/testaar.aar')
     //compile project(':testaar')
-    compile project(':testmodule')
+    implementation project(':testmodule')
 }
 
 //TimeCost

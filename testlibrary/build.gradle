@@ -25,19 +25,19 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:26.1.0'
-    testCompile 'junit:junit:4.12'
-    androidTestCompile('com.android.support.test.espresso:espresso-core:3.0.2', {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:26.1.0'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation('com.android.support.test.espresso:espresso-core:3.0.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
     //TimeCost
     if ("timecost_enable".prop(project) == 'true') {
         //implementation 'com.dryseed.timecost:timecostimp:1.+'
-        compile project(':timecostimp')
+        implementation project(':timecostimp')
     } else {
         //implementation 'com.dryseed.timecost:timecostimp-no-op:1.+'
-        compile project(':timecostimp-no-op')
+        implementation project(':timecostimp-no-op')
     }
 }

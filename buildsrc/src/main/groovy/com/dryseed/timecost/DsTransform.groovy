@@ -1,7 +1,6 @@
 package com.dryseed.timecost
 
 import com.android.build.api.transform.*
-import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.dryseed.timecost.utils.Constants
 import com.dryseed.timecost.utils.Log
@@ -24,7 +23,6 @@ import static org.objectweb.asm.ClassReader.EXPAND_FRAMES
  * @author caiminming
  */
 class DsTransform extends Transform {
-    private static AppExtension android
     private static Project project
     private static HashSet<String> whitePackageList = []
     private static boolean isAutoInject = false
@@ -32,13 +30,11 @@ class DsTransform extends Transform {
     private static HashSet<String> blackPackageList = []
     private static final String I = File.separator
     private static final String TRANSFORM_NAME = "DsTransform"
-    private final File mJarCacheDir
     private final Set<QualifiedContent.Scope> mScopes
     private final Set<QualifiedContent.Scope> mCareScopes
 
     DsTransform(Project project, File buildDir, Set<QualifiedContent.Scope> scopes) {
         DsTransform.project = project
-        mJarCacheDir = new File(buildDir, "jar-cache")
         mScopes = Collections.unmodifiableSet(scopes)
         mCareScopes = new HashSet<>()
     }
@@ -131,7 +127,7 @@ class DsTransform extends Transform {
             Log.info("===> config -> whitePackageList : ${whitePackageList}")
         }
 
-        //scope
+        // scope
         Log.info("===> config -> scope : ${timeCostConfig.scope}")
         setCareScope(timeCostConfig.scope)
 
@@ -171,6 +167,7 @@ class DsTransform extends Transform {
                 )
                 Log.info(String.format("destFile : %s \n directoryInput.file.getAbsolutePath() : %s", output, directoryInput.file.getAbsolutePath()))
                 Log.info("directoryInput.getScopes() : ${directoryInput.getScopes()}")
+                Log.info("==> output directory : ${output.absolutePath}")
 
                 if (mCareScopes.containsAll(directoryInput.getScopes())) {
                     processClassPath(directoryInput.file, directoryInput.file)
@@ -186,28 +183,24 @@ class DsTransform extends Transform {
 
                 Log.info("=> jarInput.getScopes() : ${jarInput.getScopes()} | ${jarInput.file.getAbsolutePath()}")
                 if (mCareScopes.containsAll(jarInput.getScopes())) {
-                    File cache = findCachedJar(name)
-                    if (cache != null) {
-                        input = cache
-                    } else {
-                        File tmpDir = context.getTemporaryDir()
-                        if (!tmpDir.isDirectory()) {
-                            if (tmpDir.exists()) {
-                                tmpDir.delete()
-                            }
+                    Log.info("  => jarInput.getScopes() hit careScopes")
+                    File tmpDir = context.getTemporaryDir()
+                    if (!tmpDir.isDirectory()) {
+                        if (tmpDir.exists()) {
+                            tmpDir.delete()
                         }
-                        tmpDir.mkdirs()
-                        tmpFile = new File(tmpDir, name + ".jar")
-                        FileUtils.copyFile(input, tmpFile)
-                        input = tmpFile
-                        processClassPath(input, jarInput.file)
-                        cacheProcessedJar(input, name)
                     }
+                    tmpDir.mkdirs()
+                    tmpFile = new File(tmpDir, name + ".jar")
+                    FileUtils.copyFile(input, tmpFile)
+                    input = tmpFile
+                    processClassPath(input, jarInput.file)
                 }
 
                 File output = outputProvider.getContentLocation(
                         name, jarInput.getContentTypes(),
                         jarInput.getScopes(), Format.JAR)
+                Log.info("==> output jar : ${output.absolutePath}")
                 FileUtils.copyFile(input, output)
                 if (tmpFile != null) {
                     tmpFile.delete()
@@ -233,7 +226,7 @@ class DsTransform extends Transform {
     }
 
     private void processJar(File file) {
-        Log.info("===> processJar : ${file.getAbsolutePath()}")
+        Log.info("  ==> processJar : ${file.getAbsolutePath()}")
         JarFile jarFile = new JarFile(file)
         Enumeration enumeration = jarFile.entries()
         File tmpFile = new File(file.getParent(), file.name + ".opt")
@@ -250,12 +243,19 @@ class DsTransform extends Transform {
 
             //插桩class
             if (shouldModifyClassInJar(entryName)) {
+                String simpleEntryName = entryName
+                if (simpleEntryName.contains(File.separator)) {
+                    simpleEntryName = simpleEntryName.replace(File.separator, ".")
+                }
+                if (simpleEntryName.contains("/")) {
+                    simpleEntryName = simpleEntryName.replace("/", ".")
+                }
+                simpleEntryName = simpleEntryName.replace(".class", "")
+                Log.info("  ===> shouldModifyClassInJar ${entryName} ${simpleEntryName}")
                 // log : entryName : com/dryseed/timecost/TimeCostCanary.class
-                String simpleEntryName = entryName.replace(File.separator, ".").replace(".class", "")
                 if (shouldModifyClass(simpleEntryName)) {
                     //class文件处理
-                    Log.info("  ===> modifyJarClass : ${simpleEntryName}")
-
+                    Log.info("  ====> modifyJarClass : ${simpleEntryName}")
                     ClassReader classReader = new ClassReader(IOUtils.toByteArray(inputStream))
                     ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS)
                     def className = entryName.split(".class")[0]
@@ -269,8 +269,6 @@ class DsTransform extends Transform {
             } else {
                 jarOutputStream.write(IOUtils.toByteArray(inputStream))
             }
-
-
             jarOutputStream.closeEntry()
         }
 
@@ -285,7 +283,6 @@ class DsTransform extends Transform {
             tmpFile.delete()
         }
     }
-
 
     private void processClass(File file, File dirFile) {
         Log.info("===> processClass : ${file.getAbsolutePath()}")
@@ -392,35 +389,6 @@ class DsTransform extends Transform {
 
         //Log.info("return false : other - ${className}")
         return false
-    }
-
-    File findCachedJar(String md5) {
-        if (!mJarCacheDir.isDirectory()) {
-            if (mJarCacheDir.exists()) {
-                mJarCacheDir.delete()
-            }
-            return null
-        }
-        String target = md5 + ".jar"
-        String[] files = mJarCacheDir.list()
-        for (String name : files) {
-            if (target == name) {
-                return new File(mJarCacheDir, target)
-            }
-        }
-        return null
-    }
-
-    void cacheProcessedJar(File jar, String md5) {
-        if (!mJarCacheDir.isDirectory()) {
-            if (mJarCacheDir.exists()) {
-                mJarCacheDir.delete()
-            }
-        }
-        if (!mJarCacheDir.exists()) {
-            mJarCacheDir.mkdirs()
-        }
-        FileUtils.copyFile(jar, new File(mJarCacheDir, md5 + ".jar"))
     }
 
     void setCareScope(DsPluginParams.Scope scope) {

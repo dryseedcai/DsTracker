@@ -153,7 +153,9 @@ public class TimeCostCore {
                 @Override
                 public void run() {
                     //DebugLog.d(TAG, String.format("======> handleCost : [name:%s]", Thread.currentThread().getName()));
-                    //CanaryLogUtils.save(timeCostInfo.formatInfo());
+                    if (TimeCostCanary.get().getConfig().isShowDetailUI()) {
+                        CanaryLogUtils.save(timeCostInfo.formatInfo());
+                    }
 
                     if (!mInterceptorChain.isEmpty()) {
                         for (final TimeCostInterceptor interceptor : mInterceptorChain) {

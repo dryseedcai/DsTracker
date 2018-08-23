@@ -8,10 +8,10 @@ import com.dryseed.timecost.annotations.TimeCost;
 public class TestModule {
     @TimeCost(milliTime = 300L)
     public void testModuleMethod() {
-        try {
-            Thread.sleep(500L);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        long i = 10000L;
+        String a = "a";
+        for (int n = 0; n < i; n++) {
+            a += n;
         }
     }
 }

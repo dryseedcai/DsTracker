@@ -21,6 +21,8 @@ public class TimeCostConfig {
 
     private boolean mShowDetailUI;
 
+    private boolean mShowNotifaction;
+
     private String mLogPath;
 
     private int mSortType;
@@ -28,6 +30,14 @@ public class TimeCostConfig {
     private long mNotifyInterval;
 
     private long mDelayStartMilliTime;
+
+    public boolean isShowNotifaction() {
+        return mShowNotifaction;
+    }
+
+    public void setShowNotifaction(boolean showNotifaction) {
+        mShowNotifaction = showNotifaction;
+    }
 
     public long getDelayStartMilliTime() {
         return mDelayStartMilliTime;
@@ -122,6 +132,8 @@ public class TimeCostConfig {
 
         private boolean mShowDetailUI = true;
 
+        private boolean mShowNotifaction = true;
+
         private int mSortType = TimeCostConstant.CONFIG_SORT_TYPE_START_TIME;
 
         private String mLogPath = TimeCostConstant.TIME_COST_DEFAULT_LOG_DIR;
@@ -147,6 +159,11 @@ public class TimeCostConfig {
 
         public Builder setSortType(int sortType) {
             mSortType = sortType;
+            return this;
+        }
+
+        public Builder setShowNotifaction(boolean showNotifaction) {
+            mShowNotifaction = showNotifaction;
             return this;
         }
 
@@ -199,6 +216,7 @@ public class TimeCostConfig {
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
             config.mShowDetailUI = this.mShowDetailUI;
+            config.mShowNotifaction = this.mShowNotifaction;
             config.mLogPath = this.mLogPath;
             config.mSortType = this.mSortType;
             config.mNotifyInterval = this.mNotifyInterval;

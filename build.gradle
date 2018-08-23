@@ -1,11 +1,18 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
+
     repositories {
         jcenter()
         google()
         mavenCentral()
+        ['http://maven.mbd.qiyi.domain/nexus/content/repositories/mbd-android/',
+         'http://maven.mbd.qiyi.domain/nexus/content/repositories/mbd-android-snapshot/',
+        ].each { mavenUrl ->
+            maven {
+                url mavenUrl
+            }
+        }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.1.3'

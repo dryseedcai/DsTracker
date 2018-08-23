@@ -3,6 +3,10 @@ package com.dryseed.timecost;
 /**
  * @author caiminming
  */
+
+/**
+ * @author caiminming
+ */
 public class TimeCostConfig {
     private TimeCostConfig() {
     }
@@ -19,6 +23,8 @@ public class TimeCostConfig {
 
     private boolean mShowDetailUI;
 
+    private boolean mShowNotifaction;
+
     private String mLogPath;
 
     private int mSortType;
@@ -26,6 +32,14 @@ public class TimeCostConfig {
     private long mNotifyInterval;
 
     private long mDelayStartMilliTime;
+
+    public boolean isShowNotifaction() {
+        return mShowNotifaction;
+    }
+
+    public void setShowNotifaction(boolean showNotifaction) {
+        mShowNotifaction = showNotifaction;
+    }
 
     public long getDelayStartMilliTime() {
         return mDelayStartMilliTime;
@@ -120,6 +134,8 @@ public class TimeCostConfig {
 
         private boolean mShowDetailUI = true;
 
+        private boolean mShowNotifaction = true;
+
         private int mSortType = 0;
 
         private String mLogPath = "";
@@ -145,6 +161,11 @@ public class TimeCostConfig {
 
         public Builder setSortType(int sortType) {
             mSortType = sortType;
+            return this;
+        }
+
+        public Builder setShowNotifaction(boolean showNotifaction) {
+            mShowNotifaction = showNotifaction;
             return this;
         }
 
@@ -197,6 +218,7 @@ public class TimeCostConfig {
             config.mMonitorAllThread = this.mMonitorAllThread;
             config.mMonitorOnlyMainThread = this.mMonitorOnlyMainThread;
             config.mShowDetailUI = this.mShowDetailUI;
+            config.mShowNotifaction = this.mShowNotifaction;
             config.mLogPath = this.mLogPath;
             config.mSortType = this.mSortType;
             config.mNotifyInterval = this.mNotifyInterval;

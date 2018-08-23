@@ -15,13 +15,14 @@ public class MyApplication extends Application {
         super.onCreate();
         TimeCostCanary.install(this).config(
                 new TimeCostConfig.Builder()
-                        .setExceedMilliTime(1000L)
+                        .setExceedMilliTime(500L)
                         //.setExceedMaxMilliTIme(2000L)
-                        .setThreadExceedMilliTime(1000L)
+                        .setThreadExceedMilliTime(500L)
                         .setMonitorOnlyMainThread(true)
                         .setSortType(TimeCostConstant.CONFIG_SORT_TYPE_START_TIME)
                         .setShowDetailUI(true)
-                        //.setDelayStartMilliTime(20000L)
+                        .setShowNotifaction(true)
+                        .setDelayStartMilliTime(1000L)
                         .build()
         );
 

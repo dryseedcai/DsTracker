@@ -42,7 +42,7 @@ class DsPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        Log.info("================== DsPlugin Start =======================")
+        Log.info("==================> TimeCost Plugin Start")
 
         def hasApp = project.plugins.withType(AppPlugin)
         def hasLib = project.plugins.withType(LibraryPlugin)
@@ -72,20 +72,20 @@ class DsPlugin implements Plugin<Project> {
         DsTransform transform = new DsTransform(project, mBuildDir, SCOPES)
         android.registerTransform(transform)
 
-        Log.info(String.format(
+        /*Log.info(String.format(
                 "timeCostConfig : isDebug = %b | watchTaskTimeCost = %b",
                 project.timeCostConfig.isDebug,
                 project.timeCostConfig.watchTaskTimeCost
-        ))
+        ))*/
 
         project.afterEvaluate {
             Log.setIsDebug(project.timeCostConfig.isDebug)
             if (project.timeCostConfig.watchTaskTimeCost) {
                 //task耗时监听
                 project.gradle.addListener(new TaskTimeCostListener())
-                Log.info("watchTaskTimeCost enabled")
+                //Log.info("watchTaskTimeCost enabled")
             } else {
-                Log.info("watchTaskTimeCost disabled")
+                //Log.info("watchTaskTimeCost disabled")
             }
         }
     }

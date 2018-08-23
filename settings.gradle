@@ -4,5 +4,7 @@ include ':timecostimp'
 include ':testmodule'
 include ':app' /*, ':testaar'*//*, ':testlibrary'*//*, ':gradle-plugin'*/
 
-
+/**
+ * string 注入
+ */
 apply from: "$rootDir/gradle/inject-string.gradle"

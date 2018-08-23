@@ -33,7 +33,7 @@ final class NotificationService implements TimeCostInterceptor {
 
     @Override
     public void onExceed(Context context, TimeCostInfo timeCostInfo) {
-        if (TimeCostCanary.get().getConfig().isShowDetailUI()) {
+        if (TimeCostCanary.get().getConfig().isShowNotifaction()) {
             //DebugLog.d(TAG, "onExceed : " + timeCostInfo);
             Intent intent = new Intent(context, TimeCostInfoListActivity.class);
             //intent.putExtra("show_latest", blockInfo.timeStart);
